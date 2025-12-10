@@ -1,0 +1,280 @@
+<!-- tutoring/templates/tutoring/tutors.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Find a Tutor - Campus Essentials Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tutor-card {
+        transition: transform 0.3s;
+    }
+    .tutor-card:hover {
+        transform: translateY(-5px);
+    }
+    .tutor-img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+    }
+    .rating-stars {
+        color: #ffc107;
+    }
+    .subject-tag {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        margin: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-chalkboard-teacher me-2"></i>Peer Tutoring</h2>
+        <p class="text-muted">Connect with expert tutors for academic support.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'tutoring:become_tutor' %}" class="btn btn-success">
+            <i class="fas fa-user-graduate me-2"></i>Become a Tutor
+        </a>
+    </div>
+</div>
+
+<!-- Search Section -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search by subject or tutor...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="subjectFilter">
+                    <option value="">All Subjects</option>
+                    <option value="programming">Programming</option>
+                    <option value="mathematics">Mathematics</option>
+                    <option value="physics">Physics</option>
+                    <option value="chemistry">Chemistry</option>
+                    <option value="business">Business</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="levelFilter">
+                    <option value="">All Levels</option>
+                    <option value="freshman">Freshman</option>
+                    <option value="sophomore">Sophomore</option>
+                    <option value="junior">Junior</option>
+                    <option value="senior">Senior</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100" id="searchButton">
+                    <i class="fas fa-search me-2"></i>Search
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Tutors -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">Featured Tutors</h4>
+        <div class="row" id="tutorsContainer">
+            {% for tutor in tutors %}
+            <div class="col-md-4 mb-4 tutor-item"
+                 data-subject="{{ tutor.primary_subject }}"
+                 data-level="{{ tutor.year_of_study }}"
+                 data-name="{{ tutor.user.username }}"
+                 data-rating="{{ tutor.rating }}">
+                <div class="card tutor-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            {% if tutor.user.profile_picture %}
+                            <img src="{{ tutor.user.profile_picture.url }}"
+                                 class="rounded-circle tutor-img me-3" alt="{{ tutor.user.username }}">
+                            {% else %}
+                            <div class="rounded-circle tutor-img me-3 bg-primary d-flex align-items-center justify-content-center text-white">
+                                <i class="fas fa-user fa-2x"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-1">{{ tutor.user.get_full_name|default:tutor.user.username }}</h5>
+                                <p class="text-muted mb-1">{{ tutor.get_primary_subject_display }} Tutor</p>
+                                <div class="rating-stars">
+                                    {% for i in "12345" %}
+                                    {% if forloop.counter <= tutor.rating|add:"0"|floatformat:0 %}
+                                    <i class="fas fa-star"></i>
+                                    {% elif forloop.counter <= tutor.rating|add:"0.5"|floatformat:0 %}
+                                    <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                    <i class="far fa-star"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-2">{{ tutor.rating|floatformat:1 }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="card-text text-truncate-2">{{ tutor.bio|truncatewords:20 }}</p>
+
+                        <div class="mb-3">
+                            {% for subject in tutor.subjects|slice:":3" %}
+                            <span class="subject-tag">{{ subject }}</span>
+                            {% endfor %}
+                            {% if tutor.subjects|length > 3 %}
+                            <span class="subject-tag">+{{ tutor.subjects|length|add:"-3" }} more</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="text-success mb-0">KSH {{ tutor.hourly_rate }}/hr</h5>
+                                <small class="text-muted">{{ tutor.get_year_of_study_display }}</small>
+                            </div>
+                            <a href="{% url 'tutoring:tutor_detail' tutor.id %}" class="btn btn-primary btn-sm">
+                                View Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h4 class="mb-3">How Tutoring Works</h4>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="step mb-4">
+                    <div class="step-circle mx-auto mb-3">
+                        <i class="fas fa-search fa-lg"></i>
+                    </div>
+                    <h5>Find a Tutor</h5>
+                    <p class="text-muted">Browse tutors by subject, rating, or availability</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step mb-4">
+                    <div class="step-circle mx-auto mb-3">
+                        <i class="fas fa-calendar-check fa-lg"></i>
+                    </div>
+                    <h5>Book a Session</h5>
+                    <p class="text-muted">Schedule a session at your preferred time</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step mb-4">
+                    <div class="step-circle mx-auto mb-3">
+                        <i class="fas fa-graduation-cap fa-lg"></i>
+                    </div>
+                    <h5>Learn & Succeed</h5>
+                    <p class="text-muted">Get personalized help and improve your grades</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ stats.total_tutors }}</h3>
+                <p class="text-muted">Active Tutors</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ stats.total_sessions }}</h3>
+                <p class="text-muted">Sessions Completed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ stats.average_rating }}</h3>
+                <p class="text-muted">Average Rating</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ stats.subjects_covered }}</h3>
+                <p class="text-muted">Subjects Covered</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subjects Grid -->
+<div class="card">
+    <div class="card-body">
+        <h4 class="mb-3">Browse by Subject</h4>
+        <div class="row">
+            {% for subject in subjects %}
+            <div class="col-md-2 col-4 mb-3">
+                <a href="#" class="text-decoration-none subject-link" data-subject="{{ subject.value }}">
+                    <div class="card text-center p-3">
+                        <i class="fas fa-{{ subject.icon }} fa-2x text-{{ subject.color }} mb-2"></i>
+                        <h6 class="mb-0">{{ subject.name }}</h6>
+                        <small class="text-muted">{{ subject.count }} tutors</small>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter tutors dynamically
+    document.getElementById('searchButton').addEventListener('click', function() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const subjectFilter = document.getElementById('subjectFilter').value;
+        const levelFilter = document.getElementById('levelFilter').value;
+
+        const tutorItems = document.querySelectorAll('.tutor-item');
+
+        tutorItems.forEach(item => {
+            const name = item.getAttribute('data-name').toLowerCase();
+            const subject = item.getAttribute('data-subject');
+            const level = item.getAttribute('data-level');
+
+            const matchesSearch = !searchTerm || name.includes(searchTerm);
+            const matchesSubject = !subjectFilter || subject === subjectFilter;
+            const matchesLevel = !levelFilter || level === levelFilter;
+
+            if (matchesSearch && matchesSubject && matchesLevel) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Subject links filter
+    document.querySelectorAll('.subject-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const subject = this.getAttribute('data-subject');
+            document.getElementById('subjectFilter').value = subject;
+            document.getElementById('searchButton').click();
+        });
+    });
+</script>
+{% endblock %}

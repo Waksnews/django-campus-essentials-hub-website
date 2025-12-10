@@ -1,0 +1,208 @@
+<!-- templates/core/contact.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Contact Us - Campus Essentials Hub{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+        <h1 class="display-4 fw-bold mb-4">Contact Us</h1>
+        <p class="lead">Have questions, feedback, or need support? We're here to help!</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Contact Form -->
+    <div class="col-lg-7 mb-5">
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <h3 class="mb-4">Send us a Message</h3>
+
+                {% if messages %}
+                <div class="alert alert-success">
+                    {% for message in messages %}
+                    {{ message }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject *</label>
+                        <select class="form-select" id="subject" name="subject" required>
+                            <option value="">Select a subject</option>
+                            <option value="support">Technical Support</option>
+                            <option value="feedback">Feedback & Suggestions</option>
+                            <option value="partnership">Partnership Inquiry</option>
+                            <option value="report">Report an Issue</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message *</label>
+                        <textarea class="form-control" id="message" name="message" rows="6" required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter">
+                            <label class="form-check-label" for="newsletter">
+                                Subscribe to our newsletter for updates
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-body p-5">
+                <h3 class="mb-4">Get in Touch</h3>
+
+                <div class="d-flex mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle p-3">
+                            <i class="fas fa-envelope fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Email Us</h5>
+                        <p class="text-muted mb-0">support@campuseshub.com</p>
+                        <small>We'll respond within 24 hours</small>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success text-white rounded-circle p-3">
+                            <i class="fas fa-phone fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Call Us</h5>
+                        <p class="text-muted mb-0">+254 700 000 000</p>
+                        <small>Monday - Friday, 9 AM - 5 PM</small>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning text-white rounded-circle p-3">
+                            <i class="fas fa-map-marker-alt fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Visit Us</h5>
+                        <p class="text-muted mb-0">Main Campus<br>University Road</p>
+                        <small>By appointment only</small>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info text-white rounded-circle p-3">
+                            <i class="fas fa-clock fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Support Hours</h5>
+                        <p class="text-muted mb-0">24/7 Online Support<br>Email response: 24 hours</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <h4 class="mb-4">Frequently Asked Questions</h4>
+
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                How do I verify my student account?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Use your university email address (.ac.ke) during registration. We'll send a verification link to your email.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Is the platform free to use?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes! Campus Essentials Hub is completely free for all students. We're funded by the university to support student success.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                How do I report inappropriate content?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Use the "Report" button on any post or contact us directly. We review all reports within 24 hours.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Social Links -->
+<div class="row mt-5">
+    <div class="col-12 text-center">
+        <h3 class="mb-4">Follow Us</h3>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="#" class="btn btn-outline-primary btn-lg">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="btn btn-outline-info btn-lg">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="btn btn-outline-danger btn-lg">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="btn btn-outline-primary btn-lg">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

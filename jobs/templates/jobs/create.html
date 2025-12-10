@@ -1,0 +1,87 @@
+<!-- jobs/templates/jobs/create.html -->
+{% extends 'core/base.html' %}
+
+{% block title %}Post a Job - Campus Essentials Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Post a New Job
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Job Title *</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        <textarea class="form-control" name="description" rows="4" required></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="typing">Typing Work</option>
+                                <option value="design">Design</option>
+                                <option value="errands">Errands</option>
+                                <option value="academic">Academic Support</option>
+                                <option value="photography">Photography</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location *</label>
+                            <input type="text" class="form-control" name="location" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Budget *</label>
+                            <input type="number" class="form-control" name="budget" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Budget Type *</label>
+                            <select class="form-select" name="budget_type" required>
+                                <option value="">Select Type</option>
+                                <option value="fixed">Fixed Price</option>
+                                <option value="hourly">Hourly Rate</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Duration (Optional)</label>
+                        <input type="text" class="form-control" name="duration" placeholder="e.g., 1 week, 2 days">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Skills Required (Optional)</label>
+                        <textarea class="form-control" name="skills_required" rows="2" placeholder="Separate skills with commas"></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'jobs:list' %}" class="btn btn-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Post Job
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Sent Messages{% endblock %}
+
+{% block content %}
+<h3>Sent Messages</h3>
+{% if sent_messages %}
+<ul class="list-group">
+    {% for msg in sent_messages %}
+    <li class="list-group-item">
+        <strong>To: {{ msg.receiver.username }}</strong> - {{ msg.subject }}
+        <br>
+        <small class="text-muted">{{ msg.created_at|date:"M d, Y H:i" }}</small>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>You haven't sent any messages yet.</p>
+{% endif %}
+{% endblock %}

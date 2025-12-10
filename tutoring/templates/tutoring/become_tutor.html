@@ -1,0 +1,233 @@
+<!-- tutoring/templates/tutoring/become_tutor.html -->
+
+{% extends 'core/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Become a Tutor - Campus Essentials Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-graduate me-2"></i>
+                    Become a Campus Tutor
+                </h4>
+            </div>
+            <div class="card-body p-5">
+                <div class="text-center mb-5">
+                    <div class="display-1 text-success mb-3">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h2>Share Your Knowledge, Earn Extra Income</h2>
+                    <p class="lead text-muted">Help fellow students succeed while building your tutoring profile.</p>
+                </div>
+
+                <div class="row mb-5">
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                        <h5>Earn Income</h5>
+                        <p class="text-muted">Set your own hourly rate and earn while you study</p>
+                    </div>
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                        <h5>Build Reputation</h5>
+                        <p class="text-muted">Gain valuable experience and build your academic reputation</p>
+                    </div>
+                    <div class="col-md-4 text-center mb-4">
+                        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-award fa-2x"></i>
+                        </div>
+                        <h5>Earn Badges</h5>
+                        <p class="text-muted">Get recognized with tutor badges and achievements</p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tutor Requirements:</strong> Minimum GPA of 3.0, at least one year of university study, and proficiency in the subjects you want to teach.
+                </div>
+
+                <h4 class="mb-4">Tutor Application Form</h4>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.subjects|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.primary_subject|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.year_of_study|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.hourly_rate|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Bio *</label>
+                        <textarea class="form-control" name="bio" rows="4" required placeholder="Tell students about yourself, your teaching style, and why you'd make a great tutor..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Qualifications & Experience *</label>
+                        <textarea class="form-control" name="qualifications" rows="3" required placeholder="List your academic achievements, relevant courses, tutoring experience..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Availability *</label>
+                        <textarea class="form-control" name="availability" rows="3" required placeholder="e.g., Weekdays 4-8 PM, Weekends 10 AM - 6 PM"></textarea>
+                    </div>
+
+                    <!-- Sample Work (Optional) -->
+                    <div class="mb-4">
+                        <label class="form-label">Sample Work (Optional)</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" name="sample_work" accept=".pdf,.doc,.docx">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Upload a sample of your notes or teaching materials (PDF/DOC)</small>
+                    </div>
+
+                    <!-- Agreement -->
+                    <div class="alert alert-warning">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Tutor Terms & Conditions</a>. I confirm that all information provided is accurate and I will maintain professional conduct as a tutor.
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'tutoring:tutors' %}" class="btn btn-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success Stories -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h4 class="mb-4">Success Stories</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="{% static 'images/tutor1.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
+                                    <div>
+                                        <h6 class="mb-0">John M.</h6>
+                                        <small class="text-muted">Engineering Tutor</small>
+                                    </div>
+                                </div>
+                                <p class="mb-0">"Tutoring helped me master my own subjects while earning extra income. I've helped 50+ students improve their grades!"</p>
+                                <div class="mt-2">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <span class="ms-2">4.9 rating</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <img src="{% static 'images/tutor2.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
+                                    <div>
+                                        <h6 class="mb-0">Sarah K.</h6>
+                                        <small class="text-muted">Programming Tutor</small>
+                                    </div>
+                                </div>
+                                <p class="mb-0">"The platform made it easy to find students. I've earned over KSH 100,000 while still in university!"</p>
+                                <div class="mt-2">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="fas fa-star-half-alt text-warning"></i>
+                                    <span class="ms-2">4.7 rating</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tutor Terms & Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Tutor Responsibilities</h6>
+                <p>As a tutor, you agree to:</p>
+                <ul>
+                    <li>Provide accurate information about your qualifications</li>
+                    <li>Maintain professional conduct with students</li>
+                    <li>Be punctual for scheduled sessions</li>
+                    <li>Provide quality tutoring services</li>
+                    <li>Respect student privacy and confidentiality</li>
+                </ul>
+
+                <h6>2. Payment Terms</h6>
+                <ul>
+                    <li>You set your own hourly rate</li>
+                    <li>Payments are processed through the platform</li>
+                    <li>Platform fee: 15% of each session</li>
+                    <li>Payments are released 24 hours after session completion</li>
+                </ul>
+
+                <h6>3. Code of Conduct</h6>
+                <ul>
+                    <li>No discrimination based on race, gender, religion, etc.</li>
+                    <li>No inappropriate behavior or communication</li>
+                    <li>Academic integrity must be maintained</li>
+                    <li>No completion of assignments for students</li>
+                </ul>
+
+                <h6>4. Platform Rules</h6>
+                <ul>
+                    <li>Keep communication on the platform for safety</li>
+                    <li>Report any issues or concerns immediately</li>
+                    <li>Maintain a minimum 4.0 rating to remain active</li>
+                    <li>Respond to booking requests within 24 hours</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

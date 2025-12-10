@@ -1,0 +1,290 @@
+<!-- resources/templates/resources/list.html -->
+{% extends 'core/base.html' %}
+
+{% block title %}Study Resources - Campus Essentials Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .resource-card {
+        height: 100%;
+    }
+    .file-icon {
+        font-size: 3rem;
+        color: #6c757d;
+    }
+    .download-btn {
+        width: 100%;
+    }
+    .rating-badge {
+        font-size: 0.9rem;
+    }
+    .preview-thumb {
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px 8px 0 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-book me-2"></i>Study Resources</h2>
+        <p class="text-muted">Access notes, past papers, and study materials shared by students.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'resources:upload' %}" class="btn btn-primary">
+            <i class="fas fa-upload me-2"></i>Upload Resource
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search resources..." id="searchInput">
+                    <button class="btn btn-primary" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="notes">Notes</option>
+                    <option value="past_paper">Past Papers</option>
+                    <option value="slides">Slides</option>
+                    <option value="textbook">Textbooks</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="subjectFilter">
+                    <option value="">All Subjects</option>
+                    <option value="programming">Programming</option>
+                    <option value="mathematics">Mathematics</option>
+                    <option value="physics">Physics</option>
+                    <option value="chemistry">Chemistry</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="sortFilter">
+                    <option value="newest">Newest First</option>
+                    <option value="popular">Most Popular</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="downloads">Most Downloads</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resource Grid -->
+<div class="row" id="resourcesContainer">
+    {% for resource in resources %}
+    <div class="col-md-4 mb-4 resource-item"
+         data-type="{{ resource.resource_type }}"
+         data-subject="{{ resource.subject }}"
+         data-title="{{ resource.title|lower }}"
+         data-rating="{{ resource.average_rating }}"
+         data-downloads="{{ resource.downloads }}">
+        <div class="card resource-card">
+            {% if resource.thumbnail %}
+            <img src="{{ resource.thumbnail.url }}" class="card-img-top preview-thumb" alt="{{ resource.title }}">
+            {% else %}
+            <div class="card-img-top preview-thumb bg-light d-flex align-items-center justify-content-center">
+                <i class="fas fa-file-{{ resource.resource_type }} file-icon"></i>
+            </div>
+            {% endif %}
+
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="badge bg-{% if resource.resource_type == 'notes' %}info{% elif resource.resource_type == 'past_paper' %}danger{% else %}secondary{% endif %}">
+                            {{ resource.get_resource_type_display }}
+                        </span>
+                        <span class="badge bg-light text-dark ms-1">
+                            {{ resource.get_subject_display }}
+                        </span>
+                    </div>
+                    <div class="rating-badge">
+                        <i class="fas fa-star text-warning"></i>
+                        {{ resource.average_rating|floatformat:1 }}
+                    </div>
+                </div>
+
+                <h5 class="card-title">{{ resource.title }}</h5>
+                <p class="card-text text-muted small">{{ resource.description|truncatewords:20 }}</p>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ resource.user.username }}
+                        </small>
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-download me-1"></i>{{ resource.downloads }} downloads
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">{{ resource.created_at|timesince }} ago</small>
+                        <small class="text-muted">{{ resource.course_code }}</small>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'resources:detail' resource.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>Preview
+                    </a>
+                    <a href="{{ resource.file.url }}" class="btn btn-success download-btn" download>
+                        <i class="fas fa-download me-1"></i>Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-book fa-4x text-muted mb-3"></i>
+        <h4>No resources found</h4>
+        <p class="text-muted">Be the first to share study materials!</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Top Contributors -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Contributors</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for contributor in top_contributors %}
+            <div class="col-md-3 col-6 mb-3">
+                <div class="d-flex align-items-center">
+                    {% if contributor.user.profile_picture %}
+                    <img src="{{ contributor.user.profile_picture.url }}"
+                         class="rounded-circle me-3" width="50" height="50" alt="{{ contributor.user.username }}">
+                    {% else %}
+                    <div class="rounded-circle bg-primary me-3 d-flex align-items-center justify-content-center text-white"
+                         style="width: 50px; height: 50px;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="mb-0">{{ contributor.user.username }}</h6>
+                        <small class="text-muted">{{ contributor.count }} uploads</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Upload Guidelines -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Upload Guidelines</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <i class="fas fa-check-circle text-success fa-2x me-3"></i>
+                    <div>
+                        <h6>Quality Content</h6>
+                        <p class="small text-muted">Upload clear, readable materials</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <i class="fas fa-check-circle text-success fa-2x me-3"></i>
+                    <div>
+                        <h6>Proper Formatting</h6>
+                        <p class="small text-muted">Use PDF or DOC formats when possible</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex">
+                    <i class="fas fa-check-circle text-success fa-2x me-3"></i>
+                    <div>
+                        <h6>Accurate Information</h6>
+                        <p class="small text-muted">Include course codes and descriptions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter resources
+    function filterResources() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const typeFilter = document.getElementById('typeFilter').value;
+        const subjectFilter = document.getElementById('subjectFilter').value;
+        const sortFilter = document.getElementById('sortFilter').value;
+
+        const resources = Array.from(document.querySelectorAll('.resource-item'));
+
+        // Filter
+        const filtered = resources.filter(item => {
+            const title = item.getAttribute('data-title');
+            const type = item.getAttribute('data-type');
+            const subject = item.getAttribute('data-subject');
+
+            const matchesSearch = !searchTerm || title.includes(searchTerm);
+            const matchesType = !typeFilter || type === typeFilter;
+            const matchesSubject = !subjectFilter || subject === subjectFilter;
+
+            return matchesSearch && matchesType && matchesSubject;
+        });
+
+        // Sort
+        filtered.sort((a, b) => {
+            switch(sortFilter) {
+                case 'newest':
+                    return 0; // Already sorted by server
+                case 'popular':
+                    const aDownloads = parseInt(a.getAttribute('data-downloads'));
+                    const bDownloads = parseInt(b.getAttribute('data-downloads'));
+                    return bDownloads - aDownloads;
+                case 'rating':
+                    const aRating = parseFloat(a.getAttribute('data-rating'));
+                    const bRating = parseFloat(b.getAttribute('data-rating'));
+                    return bRating - aRating;
+                default:
+                    return 0;
+            }
+        });
+
+        // Update display
+        const container = document.getElementById('resourcesContainer');
+        container.innerHTML = '';
+        filtered.forEach(item => container.appendChild(item));
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h4>No resources match your criteria</h4>
+                    <p class="text-muted">Try different filters or upload a resource!</p>
+                </div>
+            `;
+        }
+    }
+
+    // Add event listeners
+    document.getElementById('searchInput').addEventListener('input', filterResources);
+    document.getElementById('typeFilter').addEventListener('change', filterResources);
+    document.getElementById('subjectFilter').addEventListener('change', filterResources);
+    document.getElementById('sortFilter').addEventListener('change', filterResources);
+</script>
+{% endblock %}

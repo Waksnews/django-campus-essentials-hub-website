@@ -1,0 +1,85 @@
+<!-- resources/templates/resources/upload.html -->
+{% extends 'core/base.html' %}
+
+{% block title %}Upload Resource - Campus Essentials Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload Study Resource
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Title *</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Resource Type *</label>
+                            <select class="form-select" name="resource_type" required>
+                                <option value="">Select Type</option>
+                                <option value="notes">Notes</option>
+                                <option value="past_paper">Past Paper</option>
+                                <option value="slides">Slides</option>
+                                <option value="textbook">Textbook</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Subject *</label>
+                            <select class="form-select" name="subject" required>
+                                <option value="">Select Subject</option>
+                                <option value="programming">Programming</option>
+                                <option value="mathematics">Mathematics</option>
+                                <option value="physics">Physics</option>
+                                <option value="chemistry">Chemistry</option>
+                                <option value="business">Business</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Course Code *</label>
+                        <input type="text" class="form-control" name="course_code" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">File *</label>
+                        <input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required>
+                        <small class="text-muted">Accepted formats: PDF, DOC, DOCX, PPT, PPTX, TXT</small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        By uploading, you confirm this material is appropriate for academic sharing.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'resources:list' %}" class="btn btn-secondary me-md-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Upload Resource
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

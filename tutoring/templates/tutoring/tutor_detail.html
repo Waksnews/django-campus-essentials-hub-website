@@ -1,0 +1,462 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ tutor.user.username }} - Tutor Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tutor-profile-img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .rating-badge { font-size: 1.2rem; padding: 0.5rem 1rem; }
+    .availability-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.9rem; margin: 0.25rem; }
+    .availability-badge.available { background-color: #d1e7dd; color: #0f5132; }
+    .availability-badge.busy { background-color: #f8d7da; color: #842029; }
+    .subject-tag { display: inline-block; background: #e9ecef; padding: 0.5rem 1rem; border-radius: 20px; margin: 0.25rem; font-size: 0.9rem; }
+    .session-time-slot { padding: 0.5rem; border: 1px solid #dee2e6; border-radius: 5px; margin: 0.25rem; cursor: pointer; transition: all 0.2s; }
+    .session-time-slot:hover { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+    .session-time-slot.selected { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Tutor Profile -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                {% if tutor.user.profile_picture %}
+                <img src="{{ tutor.user.profile_picture.url }}" class="rounded-circle tutor-profile-img mb-3" alt="{{ tutor.user.username }}">
+                {% else %}
+                <div class="rounded-circle tutor-profile-img mb-3 mx-auto bg-primary d-flex align-items-center justify-content-center text-white">
+                    <i class="fas fa-user-graduate fa-3x"></i>
+                </div>
+                {% endif %}
+
+                <h3>{{ tutor.user.get_full_name|default:tutor.user.username }}</h3>
+                <p class="text-muted">{{ tutor.get_primary_subject_display }} Tutor</p>
+
+                <div class="rating-badge bg-warning text-white rounded-pill d-inline-flex align-items-center mb-3">
+                    <i class="fas fa-star me-1"></i>
+                    <span>{{ tutor.rating|floatformat:1 }}</span>
+                    <small class="ms-1">({{ tutor.total_sessions }} sessions)</small>
+                </div>
+
+                <div class="mb-3">
+                    <h4 class="text-success">KSH {{ tutor.hourly_rate }}/hr</h4>
+                    <small class="text-muted">Hourly Rate</small>
+                </div>
+
+                <div class="d-grid gap-2 mb-4">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookSessionModal">
+                        <i class="fas fa-calendar-check me-2"></i>Book Session
+                    </button>
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#sendMessageModal">
+                        <i class="fas fa-envelope me-2"></i>Message Tutor
+                    </button>
+                </div>
+
+                {% if tutor.qr_code %}
+                <div class="text-center">
+                    <img src="{{ tutor.qr_code.url }}" alt="QR Code" class="img-fluid" style="max-width: 150px;">
+                    <p class="small text-muted mt-2">Scan to save contact</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Tutor Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary">{{ tutor.total_sessions }}</h4>
+                        <small class="text-muted">Sessions</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success">{{ response_rate }}%</h4>
+                        <small class="text-muted">Response Rate</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ completion_rate }}%</h4>
+                        <small class="text-muted">Completion</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info">{{ repeat_rate }}%</h4>
+                        <small class="text-muted">Repeat Students</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subjects -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Subjects Offered</h5>
+            </div>
+            <div class="card-body">
+                {% for subject in tutor.subjects_list %}
+                <span class="subject-tag">{{ subject }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutor Details -->
+    <div class="col-md-8">
+        <!-- About -->
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="mb-0">About Me</h5></div>
+            <div class="card-body">
+                <p>{{ tutor.bio }}</p>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-graduation-cap me-2"></i>Qualifications</h6>
+                        <p class="text-muted">{{ tutor.qualifications }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-university me-2"></i>Year of Study</h6>
+                        <p class="text-muted">{{ tutor.get_year_of_study_display }}</p>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-clock me-2"></i>Availability</h6>
+                        <p class="text-muted">{{ tutor.availability }}</p>
+
+                        <div class="mt-2">
+                            {% for day in availability_days %}
+                            <span class="availability-badge {% if day.available %}available{% else %}busy{% endif %}">
+                                {{ day.day }}: {{ day.time }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Student Reviews</h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
+                    <i class="fas fa-edit me-1"></i>Write Review
+                </button>
+            </div>
+            <div class="card-body">
+                {% if reviews %}
+                    {% for review in reviews %}
+                    <div class="mb-4 pb-4 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center">
+                                {% if review.student.profile_picture %}
+                                <img src="{{ review.student.profile_picture.url }}" class="rounded-circle me-3" width="40" height="40" alt="{{ review.student.username }}">
+                                {% else %}
+                                <div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ review.student.username }}</h6>
+                                    <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                                </div>
+                            </div>
+                            <div class="rating-stars">
+                                {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                <i class="far fa-star text-warning"></i>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="mb-0">{{ review.comment }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <h5>No reviews yet</h5>
+                        <p class="text-muted">Be the first to review this tutor!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Recent Sessions</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for session in recent_sessions %}
+                            <tr>
+                                <td>{{ session.date|date:"M d" }}</td>
+                                <td>{{ session.student.username }}</td>
+                                <td>{{ session.subject }}</td>
+                                <td>{{ session.duration }} mins</td>
+                                <td>
+                                    <span class="badge bg-{% if session.status == 'completed' %}success{% elif session.status == 'confirmed' %}primary{% else %}warning{% endif %}">
+                                        {{ session.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No sessions yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Book Session Modal -->
+<div class="modal fade" id="bookSessionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Book a Session with {{ tutor.user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bookingForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Subject *</label>
+                            <select class="form-select" name="subject" required>
+                                <option value="">Select Subject</option>
+                                {% for subject in tutor.subjects_list %}
+                                <option value="{{ subject }}">{{ subject }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Session Date *</label>
+                            <input type="date" class="form-select" name="date" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Time Slot *</label>
+                        <div class="row" id="timeSlotsContainer"></div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Duration (minutes) *</label>
+                            <select class="form-select" name="duration" required>
+                                <option value="60">60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="120">120 minutes</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location *</label>
+                            <input type="text" class="form-control" name="location" placeholder="e.g., Library, Room 101" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" name="notes" rows="3" placeholder="Any specific topics or requirements..."></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between">
+                            <div><strong>Total Cost:</strong> <span id="totalCost">KSH {{ tutor.hourly_rate }}</span></div>
+                            <div><i class="fas fa-info-circle me-1"></i> Payment is made after session completion</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitBooking()">
+                    <i class="fas fa-calendar-check me-2"></i>Book Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Send Message Modal -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Message {{ tutor.user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="messageForm">
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" class="form-control" name="subject" placeholder="e.g., Question about tutoring session">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message *</label>
+                        <textarea class="form-control" name="message" rows="5" required placeholder="Type your message here..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Write Review Modal -->
+<div class="modal fade" id="writeReviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <div class="mb-3 text-center">
+                        <label class="form-label">Rating</label>
+                        <div class="rating-stars fs-2" id="ratingStars">
+                            <i class="far fa-star" data-rating="1"></i>
+                            <i class="far fa-star" data-rating="2"></i>
+                            <i class="far fa-star" data-rating="3"></i>
+                            <i class="far fa-star" data-rating="4"></i>
+                            <i class="far fa-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" name="rating" id="ratingValue" value="5">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Your Review *</label>
+                        <textarea class="form-control" name="comment" rows="4" required placeholder="Share your experience..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">
+                    <i class="fas fa-paper-plane me-2"></i>Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Rating stars
+    document.querySelectorAll('#ratingStars i').forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            document.getElementById('ratingValue').value = rating;
+            document.querySelectorAll('#ratingStars i').forEach((s, index) => {
+                if (index < rating) { s.classList.remove('far'); s.classList.add('fas','text-warning'); }
+                else { s.classList.remove('fas','text-warning'); s.classList.add('far'); }
+            });
+        });
+    });
+
+    // Time slot selection
+    function loadTimeSlots(date) {
+        const timeSlots = ['09:00','10:00','11:00','14:00','15:00','16:00'];
+        const container = document.getElementById('timeSlotsContainer');
+        container.innerHTML = '';
+        timeSlots.forEach(slot => {
+            const col = document.createElement('div');
+            col.className = 'col-md-4 col-6 mb-2';
+            col.innerHTML = `<div class="session-time-slot text-center" data-time="${slot}">${slot}</div>`;
+            container.appendChild(col);
+        });
+        document.querySelectorAll('.session-time-slot').forEach(slot => {
+            slot.addEventListener('click', function() {
+                document.querySelectorAll('.session-time-slot').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+    }
+
+    // Update total cost
+    document.querySelector('select[name="duration"]').addEventListener('change', function() {
+        const duration = parseInt(this.value);
+        const hourlyRate = {{ tutor.hourly_rate }};
+        const cost = (hourlyRate / 60) * duration;
+        document.getElementById('totalCost').textContent = 'KSH ' + cost.toFixed(2);
+    });
+
+    function submitBooking() {
+        const form = document.getElementById('bookingForm');
+        const formData = new FormData(form);
+        const selectedSlot = document.querySelector('.session-time-slot.selected');
+        if (!selectedSlot) { alert('Please select a time slot'); return; }
+        formData.append('time', selectedSlot.dataset.time);
+
+        fetch('{% url "tutoring:book_session" tutor.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(res => res.json())
+        .then(data => { if(data.success){ location.reload(); } else { alert('Error: '+data.error); } });
+    }
+
+    function sendMessage() {
+        const form = document.getElementById('messageForm');
+        const formData = new FormData(form);
+        fetch('{% url "tutoring:send_to_tutor" tutor.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(res => res.json())
+        .then(data => { if(data.success){ location.reload(); } else { alert('Error: '+data.error); } });
+    }
+
+    function submitReview() {
+        const form = document.getElementById('reviewForm');
+        const formData = new FormData(form);
+        fetch('{% url "tutoring:submit_review" tutor.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(res => res.json())
+        .then(data => { if(data.success){ location.reload(); } else { alert('Error: '+data.error); } });
+    }
+
+    // Load initial slots
+    const dateInput = document.querySelector('input[name="date"]');
+    dateInput.addEventListener('change', function(){ loadTimeSlots(this.value); });
+    loadTimeSlots(new Date().toISOString().split('T')[0]);
+</script>
+{% endblock %}

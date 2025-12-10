@@ -1,0 +1,221 @@
+<!-- lost_found/templates/lost_found/detail.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ item.title }} - Lost & Found{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-image {
+        max-height: 400px;
+        object-fit: contain;
+    }
+    .status-badge {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Item Details -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ item.title }}</h4>
+                <span class="badge status-badge bg-{% if item.status == 'lost' %}warning{% elif item.status == 'found' %}success{% else %}info{% endif %}">
+                    {{ item.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                {% if item.image %}
+                <div class="text-center mb-4">
+                    <img src="{{ item.image.url }}" class="img-fluid rounded item-image" alt="{{ item.title }}">
+                </div>
+                {% endif %}
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Category</h6>
+                        <p>
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-{% if item.category == 'electronics' %}laptop{% elif item.category == 'documents' %}file{% elif item.category == 'clothing' %}tshirt{% else %}question{% endif %} me-1"></i>
+                                {{ item.get_category_display }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Date {{ item.status }}</h6>
+                        <p>{{ item.date_lost|date:"F d, Y" }}</p>
+                    </div>
+                </div>
+
+                <h6>Description</h6>
+                <p class="mb-4">{{ item.description }}</p>
+
+                <h6>Location</h6>
+                <p class="mb-4">
+                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                    {{ item.location_lost }}
+                </p>
+
+                <h6>Contact Information</h6>
+                <div class="alert alert-info">
+                    <i class="fas fa-phone me-2"></i>
+                    {{ item.contact_info }}
+                    <br>
+                    <small class="text-muted">Posted by: {{ item.user.username }}</small>
+                </div>
+
+                {% if item.reward %}
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-gift me-2"></i>Reward Offered</h6>
+                    <p class="mb-0">KSH {{ item.reward }}</p>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <div>
+                        <small class="text-muted">
+                            Reported {{ item.created_at|timesince }} ago
+                            {% if item.is_resolved %}
+                            <span class="badge bg-success ms-2">Resolved</span>
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div>
+                        {% if is_owner %}
+                        <div class="btn-group">
+                            <a href="{% url 'lost_found:update' item.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </a>
+                            {% if not item.is_resolved %}
+                            <a href="{% url 'lost_found:resolve' item.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-check me-1"></i>Mark Resolved
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#contactModal">
+                            <i class="fas fa-envelope me-1"></i>Contact Owner
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Potential Matches -->
+        {% if potential_matches %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Potential Matches</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for match in potential_matches %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6>{{ match.title }}</h6>
+                                <p class="small text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    Found at: {{ match.location_found }}
+                                </p>
+                                <p class="small mb-3">{{ match.description|truncatewords:20 }}</p>
+                                <a href="{% url 'lost_found:detail' match.id %}" class="btn btn-sm btn-outline-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'lost_found:create_lost' %}" class="btn btn-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Report Lost Item
+                    </a>
+                    <a href="{% url 'lost_found:create_found' %}" class="btn btn-success">
+                        <i class="fas fa-check-circle me-2"></i>Report Found Item
+                    </a>
+                    <a href="{% url 'lost_found:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Browse All Items
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety Tips -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Safety Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Meet in public campus areas
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Verify item ownership
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Use campus security escort if needed
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Report suspicious activity
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Keep communication on platform
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contact Item Owner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <div class="mb-3">
+                        <label class="form-label">Your Message</label>
+                        <textarea class="form-control" rows="4" required placeholder="Hello, I think I might have information about this item..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Your Contact</label>
+                        <input type="text" class="form-control" required placeholder="How should they contact you back?">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Send Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

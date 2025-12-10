@@ -1,0 +1,277 @@
+<!-- templates/core/home.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Home - Campus Essentials Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 0;
+        margin-bottom: 50px;
+    }
+    .feature-card {
+        transition: transform 0.3s;
+        height: 100%;
+    }
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        text-align: center;
+        padding: 30px;
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .testimonial-card {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4">Welcome to Campus Essentials Hub</h1>
+        <p class="lead mb-4">Your one-stop platform for everything you need on campus.<br>Lost items, tutors, jobs, notes, and services all in one place.</p>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'register' %}" class="btn btn-light btn-lg me-3">
+            <i class="fas fa-user-plus me-2"></i>Get Started
+        </a>
+        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">
+            <i class="fas fa-sign-in-alt me-2"></i>Login
+        </a>
+        {% else %}
+        <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg me-3">
+            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Everything You Need, All in One Place</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-search fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="card-title">Lost & Found</h4>
+                        <p class="card-text">Lost something on campus? Found an item? Connect with fellow students to recover lost belongings.</p>
+                        <a href="{% url 'lost_found:list' %}" class="btn btn-outline-primary">Browse Items</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chalkboard-teacher fa-3x text-success"></i>
+                        </div>
+                        <h4 class="card-title">Peer Tutoring</h4>
+                        <p class="card-text">Find expert tutors for difficult subjects or offer your help to fellow students.</p>
+                        <a href="{% url 'tutoring:tutors' %}" class="btn btn-outline-success">Find Tutors</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-briefcase fa-3x text-warning"></i>
+                        </div>
+                        <h4 class="card-title">Campus Jobs</h4>
+                        <p class="card-text">Find part-time gigs, freelance work, or post opportunities for fellow students.</p>
+                        <a href="{% url 'jobs:list' %}" class="btn btn-outline-warning">Browse Jobs</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-book fa-3x text-info"></i>
+                        </div>
+                        <h4 class="card-title">Study Resources</h4>
+                        <p class="card-text">Access notes, past papers, and study materials shared by students across campus.</p>
+                        <a href="{% url 'resources:list' %}" class="btn btn-outline-info">Browse Resources</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card feature-card">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-concierge-bell fa-3x text-danger"></i>
+                        </div>
+                        <h4 class="card-title">Campus Services</h4>
+                        <p class="card-text">Find printing shops, repair services, laundry, and other essential campus services.</p>
+                        <a href="{% url 'services:directory' %}" class="btn btn-outline-danger">Browse Services</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Platform Statistics</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 class="display-4 fw-bold text-primary">{{ stats.total_users }}</h3>
+                    <p class="text-muted">Registered Students</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 class="display-4 fw-bold text-success">{{ stats.active_tutors }}</h3>
+                    <p class="text-muted">Active Tutors</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 class="display-4 fw-bold text-warning">{{ stats.jobs_posted }}</h3>
+                    <p class="text-muted">Jobs Posted</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3 class="display-4 fw-bold text-info">{{ stats.resources_shared }}</h3>
+                    <p class="text-muted">Resources Shared</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="step mb-4">
+                    <div class="step-circle mx-auto mb-3">
+                        <span class="h2">1</span>
+                    </div>
+                    <h4>Sign Up</h4>
+                    <p>Create your student account with your university email</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step mb-4">
+                    <div class="step-circle mx-auto mb-3">
+                        <span class="h2">2</span>
+                    </div>
+                    <h4>Explore Features</h4>
+                    <p>Browse through all the platform features</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="step mb-4">
+                    <div class="step-circle mx-auto mb-3">
+                        <span class="h2">3</span>
+                    </div>
+                    <h4>Connect & Benefit</h4>
+                    <p>Find what you need or offer your services</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">What Students Say</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% static 'images/user1.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
+                        <div>
+                            <h5 class="mb-0">Sarah M.</h5>
+                            <p class="text-muted mb-0">Computer Science Student</p>
+                        </div>
+                    </div>
+                    <p>"Found my lost laptop through this platform! The community is amazing."</p>
+                    <div class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% static 'images/user2.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
+                        <div>
+                            <h5 class="mb-0">John D.</h5>
+                            <p class="text-muted mb-0">Engineering Student</p>
+                        </div>
+                    </div>
+                    <p>"The tutoring feature helped me ace my calculus exams. Highly recommended!"</p>
+                    <div class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% static 'images/user3.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
+                        <div>
+                            <h5 class="mb-0">Emma W.</h5>
+                            <p class="text-muted mb-0">Business Student</p>
+                        </div>
+                    </div>
+                    <p>"Earned extra income through campus gigs while studying. Perfect for students!"</p>
+                    <div class="text-warning">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5 text-center">
+    <div class="container">
+        <h2 class="mb-4">Ready to Join Our Campus Community?</h2>
+        <p class="lead mb-4">Thousands of students are already benefiting from Campus Essentials Hub.</p>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-rocket me-2"></i>Join Now For Free
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

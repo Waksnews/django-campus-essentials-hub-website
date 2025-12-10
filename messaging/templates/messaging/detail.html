@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Message Detail{% endblock %}
+
+{% block content %}
+<h2>{{ message.subject }}</h2>
+<p><strong>From:</strong> {{ message.sender.username }}</p>
+<p><strong>To:</strong> {{ message.receiver.username }}</p>
+<p><strong>Sent:</strong> {{ message.sent_at }}</p>
+<hr>
+<p>{{ message.body }}</p>
+
+<form method="post" action="{% url 'messaging:delete_message' message.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Delete Message</button>
+</form>
+{% endblock %}

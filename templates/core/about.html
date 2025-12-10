@@ -1,0 +1,171 @@
+<!-- templates/core/about.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}About - Campus Essentials Hub{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto text-center">
+        <h1 class="display-4 fw-bold mb-4">About Campus Essentials Hub</h1>
+        <p class="lead">Connecting students to everything they need on campus, all in one platform.</p>
+    </div>
+</div>
+
+<!-- Mission -->
+<div class="row mb-5">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4">Our Mission</h2>
+                <p class="text-center fs-5">To create a centralized platform that solves the daily challenges students face on campus, fostering a supportive community where students help each other succeed.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-5">What We Offer</h2>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-search fa-2x"></i>
+                </div>
+                <h4>Lost & Found</h4>
+                <p class="text-muted">Reunite students with their lost belongings through our community-powered platform.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                </div>
+                <h4>Peer Tutoring</h4>
+                <p class="text-muted">Connect with expert tutors or share your knowledge to help fellow students.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon bg-warning bg-opacity-10 text-warning rounded-circle mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-briefcase fa-2x"></i>
+                </div>
+                <h4>Campus Jobs</h4>
+                <p class="text-muted">Find part-time gigs, freelance work, or post opportunities for fellow students.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon bg-info bg-opacity-10 text-info rounded-circle mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-book fa-2x"></i>
+                </div>
+                <h4>Study Resources</h4>
+                <p class="text-muted">Access and share notes, past papers, and study materials with the campus community.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-5">Our Vision</h2>
+        <div class="card">
+            <div class="card-body p-5">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h3>Building a Connected Campus</h3>
+                        <p>We believe that the university experience should be seamless and supportive. By bringing together all essential campus services in one place, we're creating a stronger, more connected student community.</p>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Verified student community</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Secure and private platform</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>24/7 access to campus resources</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Built by students, for students</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <img src="{% static 'images/campus-community.svg' %}" alt="Campus Community" class="img-fluid" style="max-height: 300px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="text-center mb-5">By The Numbers</h2>
+    </div>
+
+    <div class="col-md-3 col-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="display-4 text-primary">1000+</h2>
+                <p class="text-muted">Students Helped</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="display-4 text-success">500+</h2>
+                <p class="text-muted">Items Returned</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="display-4 text-warning">200+</h2>
+                <p class="text-muted">Jobs Posted</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="display-4 text-info">1000+</h2>
+                <p class="text-muted">Resources Shared</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+        <div class="card bg-primary text-white">
+            <div class="card-body p-5">
+                <h2 class="mb-4">Join Our Growing Community</h2>
+                <p class="mb-4">Thousands of students are already benefiting from Campus Essentials Hub. Be part of the movement to make campus life better for everyone.</p>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Sign Up Free
+                </a>
+                {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-rocket me-2"></i>Go to Dashboard
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

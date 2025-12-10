@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<h2>Inbox</h2>
+
+<p>Unread messages: {{ unread_count }}</p>
+
+<ul class="list-group">
+    {% for msg in messages %}
+    <li class="list-group-item {% if not msg.is_read %}list-group-item-warning{% endif %}">
+        <a href="{% url 'messaging:thread' msg.sender.id %}">
+            <strong>{{ msg.sender.username }}</strong>: {{ msg.subject|truncatewords:10 }}
+            <small class="text-muted">{{ msg.sent_at|timesince }} ago</small>
+        </a>
+    </li>
+    {% empty %}
+    <li class="list-group-item">No messages yet.</li>
+    {% endfor %}
+</ul>
+
+<a class="btn btn-primary mt-3" href="{% url 'messaging:compose' %}">Compose Message</a>
+{% endblock %}

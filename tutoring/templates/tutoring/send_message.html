@@ -1,0 +1,36 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Send Message to {{ tutor.user.username }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Message Tutor: {{ tutor.user.username }}</h4>
+            </div>
+
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" class="form-control" name="subject" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea name="body" class="form-control" rows="5" required></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'tutoring:tutor_detail' tutor.id %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,296 @@
+<!-- accounts/templates/accounts/dashboard.html -->
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Campus Essentials Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .quick-action-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .activity-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <p class="text-muted">Welcome back, {{ user.first_name|default:user.username }}! Here's what's happening.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="badge bg-success fs-6 p-2">
+            <i class="fas fa-star me-1"></i> {{ user.points }} Points
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card dashboard-card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase">My Items</h6>
+                        <h3>{{ stats.my_items }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-search fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card dashboard-card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase">My Sessions</h6>
+                        <h3>{{ stats.my_sessions }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chalkboard-teacher fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card dashboard-card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase">My Jobs</h6>
+                        <h3>{{ stats.my_jobs }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-briefcase fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card dashboard-card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase">My Resources</h6>
+                        <h3>{{ stats.my_resources }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-book fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-md-8">
+        <!-- Quick Actions -->
+        <div class="card dashboard-card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                     <a href="{% url 'lost_found:create_lost' %}" class="btn btn-outline-primary quick-action-btn">
+                            <i class="fas fa-plus me-2"></i>Report Lost Item
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'tutoring:become_tutor' %}" class="btn btn-outline-success quick-action-btn">
+                            <i class="fas fa-user-graduate me-2"></i>Become a Tutor
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'jobs:create' %}" class="btn btn-outline-warning quick-action-btn">
+                            <i class="fas fa-plus-circle me-2"></i>Post a Job
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'resources:upload' %}" class="btn btn-outline-info quick-action-btn">
+                            <i class="fas fa-upload me-2"></i>Share Notes
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'services:create' %}" class="btn btn-outline-danger quick-action-btn">
+                            <i class="fas fa-store me-2"></i>Add Service
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'messaging:compose' %}" class="btn btn-outline-secondary quick-action-btn">
+                            <i class="fas fa-envelope me-2"></i>Send Message
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card dashboard-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_activity %}
+                    {% for activity in recent_activity %}
+                    <div class="activity-item">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-{{ activity.icon }} text-{{ activity.color }} fa-lg"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <p class="mb-0">{{ activity.message }}</p>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                            </div>
+                            {% if activity.link %}
+                            <div class="flex-shrink-0">
+                                <a href="{{ activity.link }}" class="btn btn-sm btn-outline-{{ activity.color }}">View</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No recent activity</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-4">
+        <!-- Badges -->
+        <div class="card dashboard-card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-award me-2"></i>Your Badges</h5>
+            </div>
+            <div class="card-body">
+                {% if badges %}
+                    <div class="row">
+                        {% for badge in badges %}
+                        <div class="col-6 text-center mb-3">
+                            <div class="badge-icon">
+                                <i class="fas fa-{{ badge.icon }} fa-2x text-{{ badge.color }} mb-2"></i>
+                                <h6>{{ badge.title }}</h6>
+                                <small class="text-muted">{{ badge.description }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">No badges yet. Be active to earn badges!</p>
+                    <div class="text-center">
+                        <a href="#" class="btn btn-sm btn-outline-primary">How to earn badges</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="card dashboard-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommendations</h5>
+            </div>
+            <div class="card-body">
+                {% if recommendations %}
+                    <div class="list-group">
+                        {% for rec in recommendations %}
+                        <a href="{{ rec.link }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ rec.title }}</h6>
+                                <small class="text-{{ rec.type }}">{{ rec.type|title }}</small>
+                            </div>
+                            <p class="mb-1 small">{{ rec.description }}</p>
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">No recommendations yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Your Activity Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activity Chart
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    const activityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Items Posted',
+                data: {{ chart_items_data|safe }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Services Used',
+                data: {{ chart_services_data|safe }},
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Jobs Applied',
+                data: {{ chart_jobs_data|safe }},
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

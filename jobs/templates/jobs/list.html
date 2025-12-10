@@ -1,0 +1,263 @@
+<!-- jobs/templates/jobs/list.html -->
+{% extends 'core/base.html' %}
+
+{% block title %}Campus Jobs - Campus Essentials Hub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .job-card {
+        border-left: 4px solid #0d6efd;
+    }
+    .job-card.urgent {
+        border-left-color: #dc3545;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    .budget-badge {
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+    }
+    .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-briefcase me-2"></i>Campus Jobs & Gigs</h2>
+        <p class="text-muted">Find part-time work, freelance gigs, or post opportunities.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'jobs:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Post a Job
+        </a>
+    </div>
+</div>
+
+<!-- Job Categories -->
+<div class="row mb-4">
+    {% for category in categories %}
+    <div class="col-md-2 col-4 mb-3">
+        <a href="#category-{{ category.value }}" class="text-decoration-none">
+            <div class="card text-center p-2 category-card">
+                <div class="category-icon mx-auto mb-2 bg-{{ category.color }} text-white">
+                    <i class="fas fa-{{ category.icon }}"></i>
+                </div>
+                <h6 class="mb-0">{{ category.name }}</h6>
+                <small class="text-muted">{{ category.count }} jobs</small>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Job Listings -->
+<div class="row">
+    <div class="col-md-8">
+        {% for job in jobs %}
+        <div class="card mb-3 job-card {% if job.urgent %}urgent{% endif %}" id="category-{{ job.category }}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="mb-0 me-2">{{ job.title }}</h5>
+                            {% if job.urgent %}
+                            <span class="badge bg-danger">Urgent</span>
+                            {% endif %}
+                            <span class="badge bg-secondary ms-2">{{ job.get_category_display }}</span>
+                        </div>
+
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                            <span class="mx-2">•</span>
+                            <i class="fas fa-clock me-1"></i>{{ job.duration }}
+                            <span class="mx-2">•</span>
+                            <i class="fas fa-calendar me-1"></i>{{ job.created_at|timesince }} ago
+                        </p>
+
+                        <p class="mb-3">{{ job.description|truncatewords:50 }}</p>
+
+                        {% if job.skills_required %}
+                        <div class="mb-3">
+                            <strong>Skills Required:</strong>
+                            {% for skill in job.skills_required|slice:":5" %}
+                            <span class="badge bg-light text-dark me-1">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small">
+                                    <i class="fas fa-user me-1"></i>Posted by {{ job.user.username }}
+                                </span>
+                            </div>
+                            <div>
+                                <a href="{% url 'jobs:detail' job.id %}" class="btn btn-primary btn-sm me-2">
+                                    View Details
+                                </a>
+                                {% if job.user != request.user %}
+                                <a href="{% url 'jobs:apply' job.id %}" class="btn btn-success btn-sm">
+                                    Apply Now
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ms-3 text-end">
+                        <div class="budget-badge bg-{% if job.budget_type == 'hourly' %}warning{% else %}success{% endif %} text-white rounded p-2">
+                            <strong>KSH {{ job.budget }}</strong>
+                            <div class="small">{{ job.get_budget_type_display }}</div>
+                        </div>
+                        {% if job.applications.count > 0 %}
+                        <small class="text-muted mt-2 d-block">
+                            {{ job.applications.count }} application{{ job.applications.count|pluralize }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-briefcase fa-4x text-muted mb-3"></i>
+            <h4>No jobs available</h4>
+            <p class="text-muted">Be the first to post a job opportunity!</p>
+            <a href="{% url 'jobs:create' %}" class="btn btn-primary">Post a Job</a>
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if jobs.has_other_pages %}
+        <nav aria-label="Job pagination">
+            <ul class="pagination justify-content-center">
+                {% if jobs.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ jobs.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for i in jobs.paginator.page_range %}
+                <li class="page-item {% if jobs.number == i %}active{% endif %}">
+                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                </li>
+                {% endfor %}
+
+                {% if jobs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ jobs.next_page_number }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Filter -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Filter Jobs</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        {% for cat in category_choices %}
+                        <option value="{{ cat.0 }}">{{ cat.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Budget Type</label>
+                    <select class="form-select" id="budgetFilter">
+                        <option value="">Any Type</option>
+                        <option value="fixed">Fixed Price</option>
+                        <option value="hourly">Hourly Rate</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Max Budget (KSH)</label>
+                    <input type="range" class="form-range" id="budgetRange" min="0" max="50000" step="1000">
+                    <div class="d-flex justify-content-between">
+                        <span id="budgetMin">0</span>
+                        <span id="budgetMax">50,000</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary w-100" id="applyFilters">Apply Filters</button>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Job Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary">{{ stats.total_jobs }}</h4>
+                        <small class="text-muted">Total Jobs</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success">{{ stats.open_jobs }}</h4>
+                        <small class="text-muted">Open Jobs</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ stats.avg_budget }}</h4>
+                        <small class="text-muted">Avg Budget</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-info">{{ stats.success_rate }}</h4>
+                        <small class="text-muted">Success Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Tips for Job Seekers</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Complete your profile
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Write a personalized application
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Highlight relevant skills
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Be responsive to messages
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success me-2"></i>
+                        Request reviews after completion
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

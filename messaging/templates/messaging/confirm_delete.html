@@ -1,0 +1,13 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block content %}
+<h2>Delete Message</h2>
+<p>Are you sure you want to delete the message from {{ message.sender.username }}?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    <a href="{% url 'messaging:inbox' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
