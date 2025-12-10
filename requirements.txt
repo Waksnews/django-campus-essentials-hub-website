@@ -6,3 +6,4 @@ pip install crispy-bootstrap5
 pip install qrcode
 pip install reportlab
 pip install django-filter
+gunicorn
