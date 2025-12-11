@@ -1,0 +1,887 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}My Sessions - Campus Tutoring{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sessions-container {
+        background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        min-height: 100vh;
+    }
+    .session-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 15px 30px;
+        font-weight: 500;
+        border-radius: 10px 10px 0 0;
+        transition: all 0.3s;
+    }
+    .session-tabs .nav-link.active {
+        background: white;
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .session-card {
+        border-radius: 15px;
+        border: none;
+        transition: transform 0.3s;
+        overflow: hidden;
+    }
+    .session-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .session-status {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    .session-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 15px;
+    }
+    .badge-upcoming { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+    .badge-completed { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
+    .badge-cancelled { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    .badge-pending { background-color: rgba(255, 193, 7, 0.1); color: #ffc107; }
+    .session-datetime {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+    }
+    .session-actions {
+        border-top: 1px solid #e9ecef;
+        padding: 15px;
+        background: #f8f9fa;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    .empty-icon {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+    .count-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .calendar-view {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .calendar-day.has-session {
+        background-color: rgba(102, 126, 234, 0.1);
+        border: 2px solid #667eea;
+        cursor: pointer;
+    }
+    .session-count {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #667eea;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sessions-container">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold mb-2">My Sessions</h1>
+                        <p class="text-muted mb-0">
+                            Manage your tutoring sessions as {% if is_tutor %}tutor{% else %}student{% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{% url 'tutoring:tutors' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Book New Session
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="row mb-5">
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card session-card">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-2">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                        <h3 class="mb-1">{{ upcoming_student|length|add:upcoming_tutor|length }}</h3>
+                        <p class="text-muted mb-0">Upcoming</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card session-card">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-2">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <h3 class="mb-1">{{ past_student|length|add:past_tutor|length }}</h3>
+                        <p class="text-muted mb-0">Completed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card session-card">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-2">
+                            <i class="fas fa-hourglass-half fa-2x"></i>
+                        </div>
+                        <h3 class="mb-1">{{ pending_sessions_count|default:0 }}</h3>
+                        <p class="text-muted mb-0">Pending</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-4">
+                <div class="card session-card">
+                    <div class="card-body text-center">
+                        <div class="text-info mb-2">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                        <h3 class="mb-1">${{ total_spent|default:0|floatformat:0 }}</h3>
+                        <p class="text-muted mb-0">Total Spent</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs session-tabs mb-4" id="sessionsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button">
+                    <i class="fas fa-clock me-2"></i>Upcoming
+                    {% if upcoming_student|length|add:upcoming_tutor|length > 0 %}
+                    <span class="count-badge">{{ upcoming_student|length|add:upcoming_tutor|length }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button">
+                    <i class="fas fa-history me-2"></i>Past
+                </button>
+            </li>
+            {% if is_tutor %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tutor-tab" data-bs-toggle="tab" data-bs-target="#tutor" type="button">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>As Tutor
+                </button>
+            </li>
+            {% endif %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button">
+                    <i class="fas fa-calendar-alt me-2"></i>Calendar View
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="sessionsTabContent">
+            <!-- Upcoming Sessions -->
+            <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+                <div class="row">
+                    <!-- As Student -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card session-card h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-user-graduate me-2 text-primary"></i>
+                                    As Student
+                                    <span class="badge bg-primary float-end">{{ upcoming_student|length }}</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if upcoming_student %}
+                                    {% for session in upcoming_student %}
+                                    <div class="card mb-3 border-start border-primary border-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="session-badge badge-upcoming">
+                                                        <i class="fas fa-user-tie"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ session.tutor.full_name }}</h6>
+                                                        <small class="text-muted">{{ session.get_subject_display }}</small>
+                                                    </div>
+                                                </div>
+                                                <span class="session-status bg-{{ session.status }}">
+                                                    {{ session.get_status_display }}
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="session-datetime mb-3">
+                                                <div class="fs-5 fw-bold">{{ session.date|date:"l, M d" }}</div>
+                                                <div class="fs-6">
+                                                    {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}
+                                                    ({{ session.duration }} min)
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row mb-3">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Location</small>
+                                                    <div class="fw-bold">{{ session.get_location_display }}</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Amount</small>
+                                                    <div class="fw-bold">${{ session.amount|floatformat:2 }}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if session.notes %}
+                                            <div class="alert alert-light">
+                                                <small class="text-muted">Notes:</small>
+                                                <p class="mb-0">{{ session.notes|truncatechars:100 }}</p>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <div class="session-actions">
+                                                <div class="btn-group w-100">
+                                                    <a href="{% url 'tutoring:session_detail' session.id %}" 
+                                                       class="btn btn-outline-primary">
+                                                        <i class="fas fa-eye me-2"></i>View Details
+                                                    </a>
+                                                    {% if session.status == 'pending' %}
+                                                    <button type="button" 
+                                                            class="btn btn-outline-danger cancel-session"
+                                                            data-session-id="{{ session.id }}">
+                                                        <i class="fas fa-times me-2"></i>Cancel
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-calendar-plus"></i>
+                                    </div>
+                                    <h5>No upcoming sessions</h5>
+                                    <p class="text-muted mb-4">You don't have any upcoming sessions as a student.</p>
+                                    <a href="{% url 'tutoring:tutors' %}" class="btn btn-primary">
+                                        <i class="fas fa-search me-2"></i>Find a Tutor
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- As Tutor -->
+                    {% if is_tutor %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card session-card h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-chalkboard-teacher me-2 text-success"></i>
+                                    As Tutor
+                                    <span class="badge bg-success float-end">{{ upcoming_tutor|length }}</span>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if upcoming_tutor %}
+                                    {% for session in upcoming_tutor %}
+                                    <div class="card mb-3 border-start border-success border-3">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="session-badge badge-upcoming">
+                                                        <i class="fas fa-user-graduate"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ session.student.username }}</h6>
+                                                        <small class="text-muted">{{ session.student.email }}</small>
+                                                    </div>
+                                                </div>
+                                                <span class="session-status bg-{{ session.status }}">
+                                                    {{ session.get_status_display }}
+                                                </span>
+                                            </div>
+                                            
+                                            <div class="session-datetime mb-3">
+                                                <div class="fs-5 fw-bold">{{ session.date|date:"l, M d" }}</div>
+                                                <div class="fs-6">
+                                                    {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}
+                                                    ({{ session.duration }} min)
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row mb-3">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Subject</small>
+                                                    <div class="fw-bold">{{ session.get_subject_display }}</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Earnings</small>
+                                                    <div class="fw-bold">${{ session.amount|floatformat:2 }}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if session.notes %}
+                                            <div class="alert alert-light">
+                                                <small class="text-muted">Student Notes:</small>
+                                                <p class="mb-0">{{ session.notes|truncatechars:100 }}</p>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <div class="session-actions">
+                                                <div class="btn-group w-100">
+                                                    <a href="{% url 'tutoring:session_detail' session.id %}" 
+                                                       class="btn btn-outline-success">
+                                                        <i class="fas fa-eye me-2"></i>View Details
+                                                    </a>
+                                                    {% if session.status == 'pending' %}
+                                                    <button type="button" 
+                                                            class="btn btn-outline-success confirm-session"
+                                                            data-session-id="{{ session.id }}">
+                                                        <i class="fas fa-check me-2"></i>Confirm
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
+                                    <h5>No tutoring sessions</h5>
+                                    <p class="text-muted mb-4">You don't have any upcoming tutoring sessions.</p>
+                                    <a href="{% url 'tutoring:update_availability' %}" class="btn btn-success">
+                                        <i class="fas fa-calendar-edit me-2"></i>Update Availability
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Past Sessions -->
+            <div class="tab-pane fade" id="past" role="tabpanel">
+                <div class="row">
+                    <!-- As Student -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card session-card h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-history me-2 text-info"></i>
+                                    Past Sessions as Student
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if past_student %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Tutor</th>
+                                                <th>Date</th>
+                                                <th>Subject</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for session in past_student %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="session-badge badge-completed me-2">
+                                                            <i class="fas fa-user-tie"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">{{ session.tutor.full_name }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>{{ session.date|date:"M d" }}</div>
+                                                    <small class="text-muted">{{ session.start_time|time:"g:i A" }}</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark">{{ session.get_subject_display }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-{{ session.status }}">
+                                                        {{ session.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{% url 'tutoring:session_detail' session.id %}" 
+                                                           class="btn btn-outline-info">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        {% if session.status == 'completed' and not session.session_review %}
+                                                        <button type="button" 
+                                                                class="btn btn-outline-warning add-review"
+                                                                data-session-id="{{ session.id }}"
+                                                                data-tutor-id="{{ session.tutor.id }}">
+                                                            <i class="fas fa-star"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-history"></i>
+                                    </div>
+                                    <h5>No past sessions</h5>
+                                    <p class="text-muted">You haven't completed any sessions as a student yet.</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- As Tutor -->
+                    {% if is_tutor %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card session-card h-100">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-chart-line me-2 text-warning"></i>
+                                    Past Sessions as Tutor
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if past_tutor %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Date</th>
+                                                <th>Subject</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for session in past_tutor %}
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="session-badge badge-completed me-2">
+                                                            <i class="fas fa-user-graduate"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold">{{ session.student.username }}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>{{ session.date|date:"M d" }}</div>
+                                                    <small class="text-muted">{{ session.start_time|time:"g:i A" }}</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark">{{ session.get_subject_display }}</span>
+                                                </td>
+                                                <td class="fw-bold">${{ session.amount|floatformat:2 }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ session.status }}">
+                                                        {{ session.get_status_display }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Earnings Summary -->
+                                <div class="card bg-light mt-4">
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-4">
+                                                <div class="fw-bold">{{ past_tutor|length }}</div>
+                                                <small class="text-muted">Total Sessions</small>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="fw-bold">${{ total_earnings|default:0|floatformat:2 }}</div>
+                                                <small class="text-muted">Total Earnings</small>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="fw-bold">{{ average_rating|default:0|floatformat:1 }}★</div>
+                                                <small class="text-muted">Avg Rating</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <h5>No tutoring history</h5>
+                                    <p class="text-muted">You haven't completed any tutoring sessions yet.</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- As Tutor (Detailed) -->
+            {% if is_tutor %}
+            <div class="tab-pane fade" id="tutor" role="tabpanel">
+                <div class="card session-card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>
+                            Tutor Management
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-0">{{ tutor.total_sessions }}</h3>
+                                        <p class="mb-0">Total Sessions</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-0">${{ monthly_earnings|floatformat:0 }}</h3>
+                                        <p class="mb-0">This Month</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h3 class="mb-0">{{ tutor.rating|floatformat:1 }}★</h3>
+                                        <p class="mb-0">Average Rating</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Quick Actions</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-3 col-6">
+                                        <a href="{% url 'tutoring:update_availability' %}" 
+                                           class="btn btn-outline-primary w-100">
+                                            <i class="fas fa-calendar-edit me-2"></i>Availability
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <a href="{% url 'tutoring:tutor_detail' tutor.id %}" 
+                                           class="btn btn-outline-success w-100">
+                                            <i class="fas fa-edit me-2"></i>Edit Profile
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <a href="#" class="btn btn-outline-warning w-100">
+                                            <i class="fas fa-chart-bar me-2"></i>Analytics
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <a href="#" class="btn btn-outline-info w-100">
+                                            <i class="fas fa-download me-2"></i>Export
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Calendar View -->
+            <div class="tab-pane fade" id="calendar" role="tabpanel">
+                <div class="card session-card">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Calendar View
+                            </h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary" id="prevMonth">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="mx-3" id="currentMonth"></span>
+                                <button class="btn btn-sm btn-outline-secondary" id="nextMonth">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="calendar-view">
+                            <div id="calendar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cancel session
+        const cancelButtons = document.querySelectorAll('.cancel-session');
+        cancelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const sessionId = this.dataset.sessionId;
+                
+                if (confirm('Are you sure you want to cancel this session?')) {
+                    fetch(`/tutoring/sessions/${sessionId}/cancel/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Error cancelling session.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while cancelling the session.');
+                    });
+                }
+            });
+        });
+        
+        // Confirm session (as tutor)
+        const confirmButtons = document.querySelectorAll('.confirm-session');
+        confirmButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const sessionId = this.dataset.sessionId;
+                
+                if (confirm('Are you sure you want to confirm this session?')) {
+                    fetch(`/tutoring/sessions/${sessionId}/update/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `status=confirmed`
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Error confirming session.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while confirming the session.');
+                    });
+                }
+            });
+        });
+        
+        // Add review
+        const reviewButtons = document.querySelectorAll('.add-review');
+        reviewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tutorId = this.dataset.tutorId;
+                window.location.href = `/tutoring/tutor/${tutorId}/#reviews`;
+            });
+        });
+        
+        // Calendar functionality
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        
+        function renderCalendar(month, year) {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            // Update month display
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                               "July", "August", "September", "October", "November", "December"];
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+            
+            // Clear calendar
+            calendarEl.innerHTML = '';
+            
+            // Create table
+            const table = document.createElement('table');
+            table.className = 'table table-bordered mb-0';
+            
+            // Create header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+                const th = document.createElement('th');
+                th.className = 'text-center';
+                th.textContent = day;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create body
+            const tbody = document.createElement('tbody');
+            
+            let date = 1;
+            let rows = 6;
+            
+            for (let i = 0; i < rows; i++) {
+                const row = document.createElement('tr');
+                
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'calendar-day text-center position-relative';
+                    cell.style.padding = '10px';
+                    
+                    if (i === 0 && j < startingDay) {
+                        cell.classList.add('text-muted');
+                    } else if (date > daysInMonth) {
+                        cell.classList.add('text-muted');
+                    } else {
+                        const currentDate = new Date(year, month, date);
+                        const today = new Date();
+                        
+                        // Mark today
+                        if (currentDate.toDateString() === today.toDateString()) {
+                            cell.style.backgroundColor = '#e7f5ff';
+                        }
+                        
+                        cell.textContent = date;
+                        
+                        // Check if date has sessions
+                        const hasSession = checkIfDateHasSessions(currentDate);
+                        if (hasSession) {
+                            cell.classList.add('has-session');
+                            
+                            const sessionCount = document.createElement('div');
+                            sessionCount.className = 'session-count';
+                            sessionCount.textContent = hasSession;
+                            cell.appendChild(sessionCount);
+                        }
+                        
+                        date++;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            }
+            
+            table.appendChild(tbody);
+            calendarEl.appendChild(table);
+        }
+        
+        function checkIfDateHasSessions(date) {
+            // This would check from the server in production
+            // For now, return a mock number
+            const sessionsOnDate = {
+                '2025-12-15': 2,
+                '2025-12-18': 1,
+                '2025-12-20': 3
+            };
+            
+            const dateStr = date.toISOString().split('T')[0];
+            return sessionsOnDate[dateStr] || 0;
+        }
+        
+        // Calendar navigation
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        
+        if (prevMonthBtn && nextMonthBtn) {
+            prevMonthBtn.addEventListener('click', function() {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                renderCalendar(currentMonth, currentYear);
+            });
+            
+            nextMonthBtn.addEventListener('click', function() {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                renderCalendar(currentMonth, currentYear);
+            });
+            
+            // Initial render
+            renderCalendar(currentMonth, currentYear);
+        }
+    });
+</script>
+{% endblock %}

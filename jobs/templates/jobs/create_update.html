@@ -1,0 +1,545 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Campus Jobs{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-6 fw-bold mb-3">{{ title }}</h1>
+                <p class="lead text-muted">
+                    Fill in the details below to {{ action|lower }} your job posting. Be specific to attract the right candidates.
+                </p>
+            </div>
+
+            <!-- Progress Steps -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <div class="text-center">
+                                <div class="step-icon bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                                    1
+                                </div>
+                                <p class="small mb-0">Basic Info</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center">
+                                <div class="step-icon bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                                    2
+                                </div>
+                                <p class="small mb-0">Details</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center">
+                                <div class="step-icon bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                                    3
+                                </div>
+                                <p class="small mb-0">Requirements</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="text-center">
+                                <div class="step-icon bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">
+                                    4
+                                </div>
+                                <p class="small mb-0">Review</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" id="jobForm">
+                        {% csrf_token %}
+
+                        <!-- Display form errors -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-step active" id="step1">
+                            <h4 class="mb-4 pb-2 border-bottom">
+                                <i class="fas fa-info-circle text-primary me-2"></i>Basic Information
+                            </h4>
+
+                            <!-- Job Title -->
+                            <div class="mb-4">
+                                <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">
+                                    Job Title <span class="text-danger">*</span>
+                                </label>
+                                {{ form.title }}
+                                <div class="form-text">Be specific. e.g., "Web Developer for Student Project"</div>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="mb-4">
+                                <label for="{{ form.category.id_for_label }}" class="form-label fw-bold">
+                                    Category <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category }}
+                            </div>
+
+                            <!-- Location -->
+                            <div class="mb-4">
+                                <label for="{{ form.location.id_for_label }}" class="form-label fw-bold">
+                                    Location <span class="text-danger">*</span>
+                                </label>
+                                {{ form.location }}
+                                <div class="form-text">e.g., "Campus Library", "Remote", "Engineering Building"</div>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button" class="btn btn-primary next-step" data-next="step2">
+                                    Next <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Budget & Duration -->
+                        <div class="form-step" id="step2">
+                            <h4 class="mb-4 pb-2 border-bottom">
+                                <i class="fas fa-money-bill-wave text-success me-2"></i>Budget & Duration
+                            </h4>
+
+                            <div class="row">
+                                <!-- Budget -->
+                                <div class="col-md-6 mb-4">
+                                    <label for="{{ form.budget.id_for_label }}" class="form-label fw-bold">
+                                        Budget <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.budget }}
+                                    </div>
+                                    <div class="form-text">Enter the total amount you're willing to pay</div>
+                                </div>
+
+                                <!-- Budget Type -->
+                                <div class="col-md-6 mb-4">
+                                    <label for="{{ form.budget_type.id_for_label }}" class="form-label fw-bold">
+                                        Budget Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.budget_type }}
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="mb-4">
+                                <label for="{{ form.duration.id_for_label }}" class="form-label fw-bold">
+                                    Duration
+                                </label>
+                                {{ form.duration }}
+                                <div class="form-text">e.g., "2 weeks", "1 month project", "Flexible hours"</div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="step1">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="step3">
+                                    Next <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Requirements -->
+                        <div class="form-step" id="step3">
+                            <h4 class="mb-4 pb-2 border-bottom">
+                                <i class="fas fa-tools text-warning me-2"></i>Job Details & Requirements
+                            </h4>
+
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">
+                                    Job Description <span class="text-danger">*</span>
+                                </label>
+                                {{ form.description }}
+                                <div class="form-text">
+                                    Describe the job in detail. Include what needs to be done, expected outcomes, and any special requirements.
+                                </div>
+                            </div>
+
+                            <!-- Skills Required -->
+                            <div class="mb-4">
+                                <label for="{{ form.skills_required.id_for_label }}" class="form-label fw-bold">
+                                    Skills Required
+                                </label>
+                                {{ form.skills_required }}
+                                <div class="form-text">
+                                    List required skills (one per line or comma separated). e.g., "Python, Django, HTML/CSS"
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="step2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="step4">
+                                    Next <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Review & Submit -->
+                        <div class="form-step" id="step4">
+                            <h4 class="mb-4 pb-2 border-bottom">
+                                <i class="fas fa-check-circle text-success me-2"></i>Review & Submit
+                            </h4>
+
+                            <!-- Review Card -->
+                            <div class="card border mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Job Preview</h5>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Job Title:</strong>
+                                            <p id="review-title" class="mb-0 text-muted"></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Category:</strong>
+                                            <p id="review-category" class="mb-0 text-muted"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Location:</strong>
+                                            <p id="review-location" class="mb-0 text-muted"></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Budget:</strong>
+                                            <p id="review-budget" class="mb-0 text-muted"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Budget Type:</strong>
+                                            <p id="review-budget-type" class="mb-0 text-muted"></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Duration:</strong>
+                                            <p id="review-duration" class="mb-0 text-muted"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong>Description:</strong>
+                                        <p id="review-description" class="mb-0 text-muted"></p>
+                                    </div>
+
+                                    <div>
+                                        <strong>Skills Required:</strong>
+                                        <p id="review-skills" class="mb-0 text-muted"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terms & Conditions -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and confirm that this job posting complies with campus policies.
+                                </label>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="step3">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="submit" class="btn {{ btn_class }} btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i>{{ btn_text }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i>Tips for a Great Job Post</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Be specific about what needs to be done</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Include clear deadlines and expectations</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>List required skills and qualifications</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Specify if the work can be done remotely</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Mention any tools or software required</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+    .form-step {
+        display: none;
+        animation: fadeIn 0.5s;
+    }
+    .form-step.active {
+        display: block;
+    }
+    .step-icon {
+        transition: all 0.3s;
+    }
+    .step-icon.bg-primary {
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25);
+    }
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+        border-radius: 15px;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    // Multi-step form functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const steps = document.querySelectorAll('.form-step');
+        const nextButtons = document.querySelectorAll('.next-step');
+        const prevButtons = document.querySelectorAll('.prev-step');
+
+        // Initialize first step
+        steps[0].classList.add('active');
+        updateProgressSteps(1);
+
+        // Next button functionality
+        nextButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const currentStep = this.closest('.form-step');
+                const nextStepId = this.getAttribute('data-next');
+                const nextStep = document.getElementById(nextStepId);
+
+                // Validate current step before proceeding
+                if (validateStep(currentStep)) {
+                    currentStep.classList.remove('active');
+                    nextStep.classList.add('active');
+
+                    // Update progress indicator
+                    const stepNumber = parseInt(nextStepId.replace('step', ''));
+                    updateProgressSteps(stepNumber);
+
+                    // Update review section
+                    if (nextStepId === 'step4') {
+                        updateReviewSection();
+                    }
+                }
+            });
+        });
+
+        // Previous button functionality
+        prevButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const currentStep = this.closest('.form-step');
+                const prevStepId = this.getAttribute('data-prev');
+                const prevStep = document.getElementById(prevStepId);
+
+                currentStep.classList.remove('active');
+                prevStep.classList.add('active');
+
+                // Update progress indicator
+                const stepNumber = parseInt(prevStepId.replace('step', ''));
+                updateProgressSteps(stepNumber);
+            });
+        });
+
+        // Validate form step
+        function validateStep(step) {
+            const inputs = step.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+
+                    // Add error message
+                    let errorDiv = input.nextElementSibling;
+                    if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'This field is required';
+                        input.parentNode.appendChild(errorDiv);
+                    }
+                } else {
+                    input.classList.remove('is-invalid');
+
+                    // Remove error message
+                    const errorDiv = input.nextElementSibling;
+                    if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                        errorDiv.remove();
+                    }
+
+                    // Additional validation for budget
+                    if (input.id.includes('budget') && parseFloat(input.value) <= 0) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'Budget must be greater than 0';
+                        input.parentNode.appendChild(errorDiv);
+                    }
+                }
+            });
+
+            return isValid;
+        }
+
+        // Update progress steps
+        function updateProgressSteps(currentStep) {
+            const stepIcons = document.querySelectorAll('.step-icon');
+            stepIcons.forEach((icon, index) => {
+                if (index < currentStep) {
+                    icon.classList.remove('bg-light', 'text-muted');
+                    icon.classList.add('bg-primary', 'text-white');
+                } else {
+                    icon.classList.remove('bg-primary', 'text-white');
+                    icon.classList.add('bg-light', 'text-muted');
+                }
+            });
+        }
+
+        // Update review section
+        function updateReviewSection() {
+            // Get form values
+            const title = document.getElementById('{{ form.title.id_for_label }}').value;
+            const category = document.getElementById('{{ form.category.id_for_label }}');
+            const categoryText = category.options[category.selectedIndex].text;
+            const location = document.getElementById('{{ form.location.id_for_label }}').value;
+            const budget = document.getElementById('{{ form.budget.id_for_label }}').value;
+            const budgetType = document.getElementById('{{ form.budget_type.id_for_label }}');
+            const budgetTypeText = budgetType.options[budgetType.selectedIndex].text;
+            const duration = document.getElementById('{{ form.duration.id_for_label }}').value || 'Not specified';
+            const description = document.getElementById('{{ form.description.id_for_label }}').value;
+            const skills = document.getElementById('{{ form.skills_required.id_for_label }}').value || 'Not specified';
+
+            // Update review elements
+            document.getElementById('review-title').textContent = title || 'Not specified';
+            document.getElementById('review-category').textContent = categoryText;
+            document.getElementById('review-location').textContent = location || 'Not specified';
+            document.getElementById('review-budget').textContent = `$${parseFloat(budget || 0).toFixed(2)} (${budgetTypeText})`;
+            document.getElementById('review-budget-type').textContent = budgetTypeText;
+            document.getElementById('review-duration').textContent = duration;
+            document.getElementById('review-description').textContent = description ? (description.length > 200 ? description.substring(0, 200) + '...' : description) : 'Not specified';
+            document.getElementById('review-skills').textContent = skills ? (skills.length > 100 ? skills.substring(0, 100) + '...' : skills) : 'Not specified';
+        }
+
+        // Real-time validation
+        const requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+        requiredFields.forEach(field => {
+            field.addEventListener('blur', function() {
+                if (!this.value.trim()) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+
+        // Budget validation
+        const budgetField = document.getElementById('{{ form.budget.id_for_label }}');
+        if (budgetField) {
+            budgetField.addEventListener('blur', function() {
+                if (parseFloat(this.value) <= 0) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        }
+
+        // Form submission
+        document.getElementById('jobForm').addEventListener('submit', function(e) {
+            // Validate terms checkbox
+            const termsCheck = document.getElementById('termsCheck');
+            if (!termsCheck.checked) {
+                e.preventDefault();
+                termsCheck.classList.add('is-invalid');
+                showToast('Please agree to the terms and conditions', 'error');
+            }
+        });
+    });
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Remove existing toasts
+        const existingToasts = document.querySelector('.toast-container');
+        if (existingToasts) existingToasts.remove();
+
+        // Create toast container
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+
+        // Create toast
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'info'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        // Remove after 5 seconds
+        setTimeout(() => {
+            toastContainer.remove();
+        }, 5000);
+    }
+</script>
+{% endblock %}

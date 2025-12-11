@@ -1,34 +1,30 @@
-# tutoring/urls.py
 from django.urls import path
 from . import views
 
 app_name = 'tutoring'
 
 urlpatterns = [
-    # Tutor listing
+    # Public views
     path('', views.tutor_list, name='tutors'),
+    path('tutor/<int:tutor_id>/', views.tutor_detail, name='tutor_detail'),
 
-    # Become a tutor
+    # Tutor registration
     path('become-tutor/', views.become_tutor, name='become_tutor'),
+    path('dashboard/', views.tutor_dashboard, name='tutor_dashboard'),
+    path('availability/', views.update_availability, name='update_availability'),
 
-    # Tutor profile/detail
-    path('<int:tutor_id>/', views.tutor_detail, name='tutor_detail'),
+    # Session booking
+    path('tutor/<int:tutor_id>/book/', views.book_session, name='book_session'),
+    path('sessions/<int:session_id>/', views.session_detail, name='session_detail'),
 
-    # Messaging tutor
-    path('<int:tutor_id>/message/', views.send_to_tutor, name='send_to_tutor'),
+    # Reviews
+    path('tutor/<int:tutor_id>/review/', views.submit_review, name='submit_review'),
 
-    # Book a session (AJAX)
-    path('<int:tutor_id>/book/', views.book_session, name='book_session'),
+    # Messaging
+    path('tutor/<int:tutor_id>/message/', views.send_to_tutor, name='send_to_tutor'),
 
-    # Submit a review (AJAX)
-    path('<int:tutor_id>/review/', views.submit_review, name='submit_review'),
-
-    # Student's sessions
-    path('sessions/', views.my_sessions, name='my_sessions'),
-
-    # Cancel a session
+    # User sessions
+    path('my-sessions/', views.my_sessions, name='my_sessions'),
     path('sessions/<int:session_id>/cancel/', views.cancel_session, name='cancel_session'),
-
-    # Update session status (for tutors)
     path('sessions/<int:session_id>/update/', views.update_session_status, name='update_session_status'),
 ]

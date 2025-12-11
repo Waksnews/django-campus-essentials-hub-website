@@ -1,0 +1,152 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Campus Resources{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-6 fw-bold mb-2">{{ title }}</h1>
+            <p class="text-muted">Most downloaded and highly rated resources</p>
+        </div>
+        <a href="{% url 'resources:list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to All Resources
+        </a>
+    </div>
+
+    <!-- Resources Grid -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for resource in resources %}
+        <div class="col">
+            <div class="card resource-card h-100 border-0 shadow-sm">
+                <!-- Popular Badge -->
+                <div class="position-absolute top-0 end-0 m-3">
+                    {% if forloop.counter <= 3 %}
+                    <span class="badge bg-warning">
+                        <i class="fas fa-crown me-1"></i>#{{ forloop.counter }}
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Thumbnail -->
+                <div class="card-img-top bg-light text-center py-4">
+                    {% if resource.thumbnail %}
+                    <img src="{{ resource.thumbnail.url }}" alt="{{ resource.title }}" 
+                         class="img-fluid" style="max-height: 150px;">
+                    {% else %}
+                    <i class="fas fa-file-alt fa-4x text-muted"></i>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    <span class="badge bg-primary mb-2">{{ resource.get_resource_type_display }}</span>
+                    <h5 class="card-title">
+                        <a href="{% url 'resources:detail' resource.pk %}" class="text-decoration-none text-dark">
+                            {{ resource.title|truncatechars:50 }}
+                        </a>
+                    </h5>
+                    
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-graduation-cap me-1"></i>{{ resource.course_code }}
+                    </p>
+                    
+                    <!-- Stats -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <small class="text-muted">
+                                <i class="fas fa-download me-1"></i>{{ resource.downloads }}
+                            </small>
+                        </div>
+                        {% if resource.average_rating > 0 %}
+                        <div class="text-warning">
+                            <i class="fas fa-star"></i> {{ resource.average_rating|floatformat:1 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-top">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'resources:detail' resource.pk %}" class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
+                        <a href="{% url 'resources:download' resource.pk %}" class="btn btn-sm btn-success">
+                            Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-4x text-muted mb-4"></i>
+                <h4>No popular resources yet</h4>
+                <p class="text-muted">Be the first to upload and get popular!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Resource Types -->
+    <div class="card border-0 shadow-sm mt-5">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Browse by Type</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3 col-6">
+                    <a href="{% url 'resources:list' %}?type=notes" class="text-decoration-none">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <i class="fas fa-sticky-note fa-2x text-primary mb-2"></i>
+                            <h6>Notes</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-6">
+                    <a href="{% url 'resources:list' %}?type=past_paper" class="text-decoration-none">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <i class="fas fa-file-alt fa-2x text-success mb-2"></i>
+                            <h6>Past Papers</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-6">
+                    <a href="{% url 'resources:list' %}?type=slides" class="text-decoration-none">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <i class="fas fa-presentation fa-2x text-warning mb-2"></i>
+                            <h6>Slides</h6>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 col-6">
+                    <a href="{% url 'resources:list' %}?type=textbook" class="text-decoration-none">
+                        <div class="card bg-light border-0 text-center p-3">
+                            <i class="fas fa-book fa-2x text-danger mb-2"></i>
+                            <h6>Textbooks</h6>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .resource-card {
+        border-radius: 15px;
+        transition: transform 0.3s;
+    }
+    .resource-card:hover {
+        transform: translateY(-5px);
+    }
+    .resource-card .card-img-top {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}

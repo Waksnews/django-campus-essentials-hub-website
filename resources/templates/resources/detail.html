@@ -1,126 +1,497 @@
-<!-- resources/templates/resources/detail.html -->
 {% extends 'core/base.html' %}
+{% load static %}
+{% load resource_filters %}
 
-{% block title %}{{ resource.title }} - Study Resource{% endblock %}
+{% block title %}{{ resource.title }} - Campus Resources{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h4>{{ resource.title }}</h4>
-                <p>{{ resource.description }}</p>
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'resources:list' %}">Resources</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'resources:list' %}?subject={{ resource.subject }}">{{ resource.get_subject_display }}</a></li>
+            <li class="breadcrumb-item active">{{ resource.title|truncatechars:40 }}</li>
+        </ol>
+    </nav>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <p><strong>Type:</strong> {{ resource.get_resource_type_display }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Subject:</strong> {{ resource.get_subject_display }}</p>
-                    </div>
-                </div>
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Resource Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <span class="badge bg-primary mb-2">
+                                {{ resource.get_resource_type_display }}
+                            </span>
+                            <h1 class="h2 fw-bold mb-2">{{ resource.title }}</h1>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <p><strong>Course Code:</strong> {{ resource.course_code }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Downloads:</strong> {{ resource.downloads }}</p>
-                    </div>
-                </div>
+                            <!-- Course Info -->
+                            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                <span class="text-muted">
+                                    <i class="fas fa-graduation-cap me-1"></i>{{ resource.course_code }}
+                                    {% if resource.course_name %}- {{ resource.course_name }}{% endif %}
+                                </span>
+                                <span class="text-muted">
+                                    <i class="fas fa-book me-1"></i>{{ resource.get_subject_display }}
+                                </span>
+                                {% if resource.year %}
+                                <span class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ resource.year }}
+                                    {% if resource.semester %}/ {{ resource.get_semester_display }}{% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
 
-                <div class="mt-4">
-                    {% if is_owner %}
-                    <div class="btn-group">
-                        <a href="{% url 'resources:update' resource.id %}" class="btn btn-primary">
-                            <i class="fas fa-edit me-2"></i>Edit
-                        </a>
-                        <a href="{% url 'resources:download' resource.id %}" class="btn btn-success">
+                            <!-- Stats -->
+                            <div class="d-flex flex-wrap gap-3 mb-3">
+                                <span class="text-muted">
+                                    <i class="fas fa-download me-1"></i>{{ resource.downloads }} downloads
+                                </span>
+                                <span class="text-muted">
+                                    <i class="fas fa-eye me-1"></i>{{ resource.views }} views
+                                </span>
+                                <span class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ resource.created_at|timesince }} ago
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Rating -->
+                        {% if resource.average_rating > 0 %}
+                        <div class="text-center">
+                            <div class="display-6 text-warning mb-1">
+                                {{ resource.average_rating|floatformat:1 }}
+                            </div>
+                            <div class="text-warning mb-1">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= resource.average_rating %}
+                                    <i class="fas fa-star"></i>
+                                    {% else %}
+                                    <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">({{ resource.total_ratings }} reviews)</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <!-- Download Button -->
+                        <a href="{% url 'resources:download' resource.pk %}" class="btn btn-success">
                             <i class="fas fa-download me-2"></i>Download
                         </a>
+
+                        {% if user.is_authenticated %}
+                            <!-- Bookmark Button -->
+                            <a href="{% url 'resources:toggle_bookmark' resource.pk %}" class="btn btn-outline-warning">
+                                {% if is_bookmarked %}
+                                <i class="fas fa-bookmark me-2"></i>Bookmarked
+                                {% else %}
+                                <i class="far fa-bookmark me-2"></i>Bookmark
+                                {% endif %}
+                            </a>
+
+                            {% if is_owner %}
+                            <!-- Owner Actions -->
+                            <a href="{% url 'resources:update' resource.pk %}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Edit
+                            </a>
+                            <a href="{% url 'resources:delete' resource.pk %}" class="btn btn-outline-danger">
+                                <i class="fas fa-trash me-2"></i>Delete
+                            </a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login to Download
+                            </a>
+                        {% endif %}
+
+                        <!-- Share Button -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-share-alt me-2"></i>Share
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#"><i class="fab fa-facebook me-2"></i>Facebook</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fab fa-twitter me-2"></i>Twitter</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-link me-2"></i>Copy Link</a></li>
+                            </ul>
+                        </div>
                     </div>
+
+                    <!-- Approval Status -->
+                    {% if not resource.is_approved %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        This resource is pending approval by moderators.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
+                </div>
+                <div class="card-body">
+                    <div class="resource-description">
+                        {{ resource.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Additional Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                {% if resource.instructor %}
+                                <li class="mb-2">
+                                    <strong>Instructor:</strong> {{ resource.instructor }}
+                                </li>
+                                {% endif %}
+                                {% if resource.year %}
+                                <li class="mb-2">
+                                    <strong>Year:</strong> {{ resource.year }}
+                                </li>
+                                {% endif %}
+                                {% if resource.semester %}
+                                <li class="mb-2">
+                                    <strong>Semester:</strong> {{ resource.get_semester_display }}
+                                </li>
+                                {% endif %}
+                                <li class="mb-2">
+                                    <strong>Uploaded by:</strong> {{ resource.user.username }}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>Access:</strong> {{ resource.get_access_level_display }}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>File Type:</strong> {{ resource.file.name|slice:'-3:'|upper }}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Uploaded:</strong> {{ resource.created_at|date:"F d, Y" }}
+                                </li>
+                                {% if resource.tags %}
+                                <li class="mb-2">
+                                    <strong>Tags:</strong>
+                                    {% for tag in resource.tags|split:"," %}
+                                    <span class="badge bg-light text-dark border me-1">{{ tag.strip }}</span>
+                                    {% endfor %}
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Reviews ({{ total_reviews }})</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Add Review Form -->
+                    {% if user.is_authenticated and not is_owner and not user_review %}
+                    <div class="mb-4">
+                        <h6>Add Your Review</h6>
+                        <form method="POST" action="{% url 'resources:add_review' resource.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Rating</label>
+                                <div class="rating-stars">
+                                    {% for i in "54321" %}
+                                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}"
+                                           class="d-none" {% if forloop.first %}checked{% endif %}>
+                                    <label for="star{{ i }}" class="star-label">
+                                        <i class="far fa-star fa-2x"></i>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <textarea name="comment" class="form-control" rows="3"
+                                          placeholder="Share your thoughts about this resource..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                        </form>
+                    </div>
+                    {% elif user_review %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-check-circle me-2"></i>
+                        You've already reviewed this resource.
+                    </div>
+                    {% elif is_owner %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You cannot review your own resource.
+                    </div>
+                    {% endif %}
+
+                    <!-- Reviews List -->
+                    {% if reviews %}
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                        <div class="review-item border-bottom py-3 {% if forloop.last %}border-bottom-0{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">{{ review.user.username }}</h6>
+                                    <div class="text-warning">
+                                        {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star"></i>
+                                        {% else %}
+                                        <i class="far fa-star"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                            </div>
+                            <p class="mb-0">{{ review.comment }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if reviews.has_other_pages %}
+                    <nav aria-label="Review pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if reviews.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?review_page={{ reviews.previous_page_number }}">&laquo;</a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in reviews.paginator.page_range %}
+                            {% if reviews.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?review_page={{ i }}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if reviews.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?review_page={{ reviews.next_page_number }}">&raquo;</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
                     {% else %}
-                    <a href="{% url 'resources:download' resource.id %}" class="btn btn-success">
-                        <i class="fas fa-download me-2"></i>Download Resource
-                    </a>
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No reviews yet. Be the first to review!</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">Resource Info</div>
-            <div class="card-body">
-                <p><strong>Uploaded By:</strong> {{ resource.user.username }}</p>
-                <p><strong>Uploaded:</strong> {{ resource.created_at|timesince }} ago</p>
-                <p><strong>Status:</strong>
-                    {% if resource.is_approved %}
-                    <span class="badge bg-success">Approved</span>
-                    {% else %}
-                    <span class="badge bg-warning">Pending Review</span>
-                    {% endif %}
-                </p>
-
-                {% if is_owner %}
-                <hr>
-                <button class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                    <i class="fas fa-trash me-2"></i>Delete Resource
-                </button>
-                {% endif %}
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Uploader Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Uploader</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                        <h6>{{ resource.user.username }}</h6>
+                        <p class="text-muted small mb-3">
+                            Member since {{ resource.user.date_joined|date:"M Y" }}
+                        </p>
+                        <div class="d-flex justify-content-around">
+                            <div class="text-center">
+                                <div class="h5 mb-1">{{ resource.user.uploaded_resources.count }}</div>
+                                <small class="text-muted">Uploads</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="h5 mb-1">
+                                    {% with total=resource.user.uploaded_resources.all %}
+                                    {{ total.aggregate.sum.downloads|default:0 }}
+                                    {% endwith %}
+                                </div>
+                                <small class="text-muted">Downloads</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="card">
-            <div class="card-header">Rate This Resource</div>
-            <div class="card-body">
-                <form method="post" action="{% url 'resources:add_review' resource.id %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">Rating</label>
-                        <select class="form-select" name="rating">
-                            <option value="5">5 Stars - Excellent</option>
-                            <option value="4">4 Stars - Very Good</option>
-                            <option value="3">3 Stars - Good</option>
-                            <option value="2">2 Stars - Fair</option>
-                            <option value="1">1 Star - Poor</option>
-                        </select>
+            <!-- Related Resources -->
+            {% if related_resources %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-book me-2"></i>Related Resources</h5>
+                </div>
+                <div class="card-body">
+                    {% for related in related_resources %}
+                    <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <h6 class="mb-1">
+                            <a href="{% url 'resources:detail' related.pk %}" class="text-decoration-none">
+                                {{ related.title|truncatechars:40 }}
+                            </a>
+                        </h6>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">{{ related.course_code }}</small>
+                            <span class="badge bg-primary">{{ related.get_resource_type_display }}</span>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Comment</label>
-                        <textarea class="form-control" name="comment" rows="2"></textarea>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- User Resources -->
+            {% if user_resources %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Your Resources</h5>
+                </div>
+                <div class="card-body">
+                    {% for user_resource in user_resources %}
+                    <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <h6 class="mb-1">
+                            <a href="{% url 'resources:detail' user_resource.pk %}" class="text-decoration-none">
+                                {{ user_resource.title|truncatechars:40 }}
+                            </a>
+                        </h6>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">{{ user_resource.course_code }}</small>
+                            <span class="badge {% if user_resource.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                {% if user_resource.is_approved %}Approved{% else %}Pending{% endif %}
+                            </span>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-star me-2"></i>Submit Review
-                    </button>
-                </form>
+                    {% endfor %}
+                    <a href="{% url 'resources:my_resources' %}" class="btn btn-outline-primary btn-sm w-100">
+                        View All Your Resources
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Safety Notice -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="fas fa-shield-alt me-2"></i>Safety Notice</h6>
+                    <ul class="list-unstyled small text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Scan files before downloading</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Report inappropriate content</li>
+                        <li><i class="fas fa-check-circle text-success me-2"></i>Respect copyright policies</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Modal -->
-{% if is_owner %}
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete Resource</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this resource?</p>
-                <form method="post" action="{% url 'resources:delete' resource.id %}" id="deleteForm">
-                    {% csrf_token %}
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="deleteForm" class="btn btn-danger">Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+<!-- Custom CSS -->
+<style>
+    .resource-description {
+        line-height: 1.8;
+        font-size: 1.05rem;
+    }
+    .rating-stars {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+    .star-label {
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.2s;
+        margin-right: 5px;
+    }
+    .rating-stars input:checked ~ .star-label,
+    .rating-stars input:hover ~ .star-label,
+    .star-label:hover,
+    .star-label:hover ~ .star-label {
+        color: #ffc107;
+    }
+    .review-item {
+        transition: background-color 0.3s;
+    }
+    .review-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+
+<!-- JavaScript for Star Ratings -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Star rating hover effect
+        const starLabels = document.querySelectorAll('.star-label');
+        starLabels.forEach(label => {
+            label.addEventListener('mouseenter', function() {
+                const rating = this.htmlFor.replace('star', '');
+                highlightStars(rating);
+            });
+
+            label.addEventListener('click', function() {
+                const rating = this.htmlFor.replace('star', '');
+                console.log('Selected rating:', rating);
+            });
+        });
+
+        // Reset stars when mouse leaves rating area
+        const ratingStars = document.querySelector('.rating-stars');
+        if (ratingStars) {
+            ratingStars.addEventListener('mouseleave', function() {
+                resetStars();
+            });
+        }
+
+        function highlightStars(rating) {
+            starLabels.forEach(label => {
+                const starRating = label.htmlFor.replace('star', '');
+                const icon = label.querySelector('i');
+                if (starRating <= rating) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                }
+            });
+        }
+
+        function resetStars() {
+            const checkedInput = document.querySelector('input[name="rating"]:checked');
+            if (checkedInput) {
+                highlightStars(checkedInput.value);
+            } else {
+                starLabels.forEach(label => {
+                    const icon = label.querySelector('i');
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                });
+            }
+        }
+    });
+</script>
 {% endblock %}

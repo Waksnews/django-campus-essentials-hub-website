@@ -1,7 +1,7 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Post a New Job{% endblock %}
+{% block title %}Update Job{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -9,7 +9,7 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom">
-                    <h2 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Post a New Job</h2>
+                    <h2 class="mb-0"><i class="fas fa-edit me-2"></i>Update Job</h2>
                 </div>
                 <div class="card-body p-4 p-md-5">
                     <form method="POST">
@@ -85,42 +85,19 @@
                             <div class="form-text">List skills separated by commas</div>
                         </div>
                         
-                        <!-- Submit Button -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-paper-plane me-2"></i>Post Job
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'jobs:detail' job.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Job
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-            
-            <!-- Tips -->
-            <div class="card border-0 shadow-sm mt-4">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Tips for a Great Job Post</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="mb-0">
-                        <li class="mb-2">Be specific about what needs to be done</li>
-                        <li class="mb-2">Include clear deadlines and expectations</li>
-                        <li class="mb-2">List required skills and qualifications</li>
-                        <li>Mention if the work can be done remotely</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
 </div>
-
-<style>
-    .form-control, .form-select {
-        border-radius: 8px;
-        padding: 10px 15px;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-    }
-</style>
 {% endblock %}

@@ -1,0 +1,720 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Tutor Dashboard - Campus Tutoring{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+    .dashboard-card {
+        border-radius: 15px;
+        border: none;
+        transition: transform 0.3s;
+        overflow: hidden;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #667eea;
+        line-height: 1;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    .badge-status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    .session-card {
+        border-left: 4px solid;
+        transition: all 0.3s;
+    }
+    .session-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .session-pending { border-left-color: #ffc107; }
+    .session-confirmed { border-left-color: #28a745; }
+    .session-completed { border-left-color: #17a2b8; }
+    .session-cancelled { border-left-color: #dc3545; }
+    .availability-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .availability-online { background-color: #28a745; }
+    .availability-offline { background-color: #dc3545; }
+    .earning-chart {
+        height: 200px;
+        position: relative;
+    }
+    .quick-action-btn {
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        background: white;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+        cursor: pointer;
+        height: 100%;
+    }
+    .quick-action-btn:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        transform: translateY(-2px);
+    }
+    .action-icon {
+        font-size: 2rem;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .profile-completion {
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    .completion-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.5s;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 10px 20px;
+        border-radius: 10px 10px 0 0;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        background: white;
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid py-4">
+        <!-- Dashboard Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 fw-bold mb-2">Tutor Dashboard</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'core:home' %}">Home</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'tutoring:tutors' %}">Tutoring</a></li>
+                                <li class="breadcrumb-item active">Dashboard</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div>
+                        <a href="{% url 'tutoring:tutor_detail' tutor.id %}" 
+                           class="btn btn-outline-primary me-2">
+                            <i class="fas fa-eye me-2"></i>View Public Profile
+                        </a>
+                        <a href="{% url 'tutoring:update_availability' %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-calendar-edit me-2"></i>Update Availability
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-number">{{ tutor.total_sessions }}</div>
+                    <div class="stat-label">Total Sessions</div>
+                    <div class="small text-muted mt-2">{{ upcoming_sessions|length }} upcoming</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-number">${{ monthly_earnings|floatformat:0 }}</div>
+                    <div class="stat-label">This Month's Earnings</div>
+                    <div class="small text-muted mt-2">Total: ${{ total_earnings|default:0 }}</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-number">{{ tutor.total_hours|floatformat:0 }}</div>
+                    <div class="stat-label">Hours Tutored</div>
+                    <div class="small text-muted mt-2">{{ tutor.average_rating|floatformat:1 }}★ average rating</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <span class="availability-indicator {% if tutor.is_available %}availability-online{% else %}availability-offline{% endif %}"></span>
+                        <div class="stat-number">{{ pending_sessions }}</div>
+                    </div>
+                    <div class="stat-label">Pending Sessions</div>
+                    <div class="small text-muted mt-2">
+                        {% if tutor.is_available %}Available for new sessions{% else %}Not available{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8 mb-4">
+                <!-- Upcoming Sessions -->
+                <div class="card dashboard-card mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            Upcoming Sessions
+                        </h5>
+                        <span class="badge bg-primary">{{ upcoming_sessions|length }}</span>
+                    </div>
+                    <div class="card-body">
+                        {% if upcoming_sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Date & Time</th>
+                                        <th>Subject</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in upcoming_sessions %}
+                                    <tr class="session-card session-{{ session.status }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                                                         style="width: 35px; height: 35px;">
+                                                        {{ session.student.username|first|upper }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ session.student.username }}</div>
+                                                    <small class="text-muted">{{ session.student.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>{{ session.date|date:"M d, Y" }}</div>
+                                            <small class="text-muted">{{ session.start_time|time:"g:i A" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if session.subject %}
+                                            <span class="badge bg-light text-dark">{{ session.subject.name }}</span>
+                                            {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ session.duration }} min</td>
+                                        <td>
+                                            <span class="badge-status bg-{{ session.status }}">
+                                                {{ session.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'tutoring:session_detail' session.id %}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if session.status == 'pending' %}
+                                                <button type="button" 
+                                                        class="btn btn-outline-success confirm-session"
+                                                        data-session-id="{{ session.id }}">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h5>No upcoming sessions</h5>
+                            <p class="text-muted">Your upcoming sessions will appear here.</p>
+                            <a href="{% url 'tutoring:update_availability' %}" class="btn btn-primary">
+                                <i class="fas fa-calendar-plus me-2"></i>Update Availability
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Reviews -->
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star me-2 text-warning"></i>
+                            Recent Reviews
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_reviews %}
+                            {% for review in recent_reviews %}
+                            <div class="card mb-3 border-start border-warning border-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="mb-0">{{ review.student.username }}</h6>
+                                            <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                                        </div>
+                                        <div class="rating-stars">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                                {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <p class="mb-0">{{ review.comment }}</p>
+                                    
+                                    {% if review.knowledge or review.teaching_skill or review.communication or review.punctuality %}
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <small class="text-muted">Knowledge</small>
+                                            <div class="small">{{ review.knowledge }}/5</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Teaching Skill</small>
+                                            <div class="small">{{ review.teaching_skill }}/5</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Communication</small>
+                                            <div class="small">{{ review.communication }}/5</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Punctuality</small>
+                                            <div class="small">{{ review.punctuality }}/5</div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="text-center mt-3">
+                                <a href="{% url 'tutoring:tutor_detail' tutor.id %}#reviews" 
+                                   class="btn btn-outline-warning">
+                                    <i class="fas fa-list me-2"></i>View All Reviews
+                                </a>
+                            </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                            <h5>No reviews yet</h5>
+                            <p class="text-muted">Your reviews will appear here once students start reviewing.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                <!-- Profile Completion -->
+                <div class="card dashboard-card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-check me-2 text-success"></i>
+                            Profile Completion
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% with completion_percentage=tutor.profile_completion_percentage|default:75 %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Profile Strength</span>
+                                <span>{{ completion_percentage }}%</span>
+                            </div>
+                            <div class="profile-completion bg-light">
+                                <div class="completion-bar" style="width: {{ completion_percentage }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="small">
+                            {% if completion_percentage < 100 %}
+                            <p class="text-muted mb-2">Complete your profile to get more students:</p>
+                            <ul class="list-unstyled">
+                                {% if not tutor.profile_picture %}
+                                <li class="mb-1">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Add profile picture
+                                </li>
+                                {% endif %}
+                                {% if not tutor.bio or tutor.bio|length < 100 %}
+                                <li class="mb-1">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Improve bio (min. 100 chars)
+                                </li>
+                                {% endif %}
+                                {% if not tutor.qualifications %}
+                                <li class="mb-1">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Add qualifications
+                                </li>
+                                {% endif %}
+                                {% if not tutor.availability_slots %}
+                                <li class="mb-1">
+                                    <i class="fas fa-times text-danger me-2"></i>
+                                    Set availability
+                                </li>
+                                {% endif %}
+                            </ul>
+                            {% else %}
+                            <p class="text-success mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Your profile is complete!
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card dashboard-card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2 text-primary"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <a href="{% url 'tutoring:update_availability' %}" class="text-decoration-none">
+                                    <div class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </div>
+                                        <div class="small fw-bold">Update Availability</div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="{% url 'tutoring:tutor_detail' tutor.id %}" class="text-decoration-none">
+                                    <div class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="small fw-bold">Edit Profile</div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="{% url 'messaging:inbox' %}" class="text-decoration-none">
+                                    <div class="quick-action-btn position-relative">
+                                        {% if unread_messages > 0 %}
+                                        <span class="notification-badge">{{ unread_messages }}</span>
+                                        {% endif %}
+                                        <div class="action-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div class="small fw-bold">Messages</div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#availabilityModal">
+                                    <div class="quick-action-btn">
+                                        <div class="action-icon">
+                                            <i class="fas fa-toggle-on"></i>
+                                        </div>
+                                        <div class="small fw-bold">
+                                            {% if tutor.is_available %}
+                                            Go Offline
+                                            {% else %}
+                                            Go Online
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Availability Status -->
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2 text-info"></i>
+                            Availability Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="availability-indicator {% if tutor.is_available %}availability-online{% else %}availability-offline{% endif %} me-2"></span>
+                            <h5 class="mb-0">
+                                {% if tutor.is_available %}
+                                Available for Sessions
+                                {% else %}
+                                Not Available
+                                {% endif %}
+                            </h5>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">Current Status</small>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="availabilityToggle" 
+                                       {% if tutor.is_available %}checked{% endif %}>
+                                <label class="form-check-label" for="availabilityToggle">
+                                    {% if tutor.is_available %}
+                                    Accepting new sessions
+                                    {% else %}
+                                    Not accepting new sessions
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="small text-muted">
+                            <p class="mb-2">Next 7 days availability:</p>
+                            <div class="row">
+                                {% for day in next_7_days %}
+                                <div class="col-4 mb-2">
+                                    <div class="text-center">
+                                        <div class="small">{{ day|date:"D" }}</div>
+                                        <div class="fw-bold">{{ day|date:"M j" }}</div>
+                                        {% with day_name=day|date:"l"|lower %}
+                                            {% if day_name in tutor.availability_slots %}
+                                            <span class="badge bg-success bg-opacity-25 text-success">Available</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary bg-opacity-25">Busy</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2 text-success"></i>
+                            Earnings Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="earning-chart" id="earningsChart">
+                                    <!-- Chart will be rendered here -->
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <div class="text-center">
+                                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted">Earnings chart will be displayed here</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h3 class="text-success mb-0">${{ monthly_earnings|floatformat:2 }}</h3>
+                                    <p class="text-muted mb-3">This Month's Earnings</p>
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Completed Sessions</span>
+                                            <span>{{ completed_sessions_this_month|default:0 }}</span>
+                                        </div>
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" 
+                                                 style="width: {{ completed_sessions_percentage|default:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>Average Session Rate</span>
+                                            <span>${{ average_session_rate|default:0|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <a href="#" class="btn btn-outline-success">
+                                        <i class="fas fa-download me-2"></i>Download Earnings Report
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Availability Modal -->
+<div class="modal fade" id="availabilityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Availability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to 
+                    {% if tutor.is_available %}
+                    go offline and stop accepting new sessions?
+                    {% else %}
+                    go online and start accepting new sessions?
+                    {% endif %}
+                </p>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="sendNotification">
+                    <label class="form-check-label" for="sendNotification">
+                        Send notification to students on your waitlist
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAvailabilityToggle">
+                    {% if tutor.is_available %}
+                    Go Offline
+                    {% else %}
+                    Go Online
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Availability toggle
+        const availabilityToggle = document.getElementById('availabilityToggle');
+        const confirmToggleBtn = document.getElementById('confirmAvailabilityToggle');
+        
+        availabilityToggle.addEventListener('change', function() {
+            $('#availabilityModal').modal('show');
+        });
+        
+        confirmToggleBtn.addEventListener('click', function() {
+            const sendNotification = document.getElementById('sendNotification').checked;
+            
+            fetch('{% url "tutoring:update_availability" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_available: !{{ tutor.is_available|lower }},
+                    send_notification: sendNotification
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating availability: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating availability.');
+            });
+        });
+        
+        // Confirm session
+        const confirmButtons = document.querySelectorAll('.confirm-session');
+        confirmButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const sessionId = this.dataset.sessionId;
+                
+                if (confirm('Are you sure you want to confirm this session?')) {
+                    fetch(`/tutoring/sessions/${sessionId}/update/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `status=confirmed`
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Error confirming session.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while confirming the session.');
+                    });
+                }
+            });
+        });
+        
+        // Initialize earnings chart
+        function initEarningsChart() {
+            // This would be replaced with actual chart library like Chart.js
+            console.log('Earnings chart initialized');
+        }
+        
+        initEarningsChart();
+    });
+</script>
+{% endblock %}

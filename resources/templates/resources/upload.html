@@ -1,85 +1,413 @@
-<!-- resources/templates/resources/upload.html -->
 {% extends 'core/base.html' %}
+{% load static %}
 
-{% block title %}Upload Resource - Campus Essentials Hub{% endblock %}
+{% block title %}{{ title }} - Campus Resources{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-upload me-2"></i>
-                    Upload Study Resource
-                </h4>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-6 fw-bold mb-3">{{ title }}</h1>
+                <p class="lead text-muted">
+                    Share your study materials with the campus community. Help others succeed!
+                </p>
             </div>
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
 
-                    <div class="mb-3">
-                        <label class="form-label">Title *</label>
-                        <input type="text" class="form-control" name="title" required>
-                    </div>
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-                    <div class="mb-3">
-                        <label class="form-label">Description *</label>
-                        <textarea class="form-control" name="description" rows="3" required></textarea>
-                    </div>
+            <!-- Upload Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" enctype="multipart/form-data" id="resourceForm">
+                        {% csrf_token %}
 
-                    <div class="row mb-3">
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <!-- Resource Information -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 pb-2 border-bottom">
+                                <i class="fas fa-info-circle text-primary me-2"></i>Resource Information
+                            </h5>
+
+                            <!-- Title -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.title.label }}</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Be descriptive and specific</div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Describe what this resource contains, its quality, and how it can help others
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Resource Type -->
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold">{{ form.resource_type.label }}</label>
+                                    {{ form.resource_type }}
+                                    {% if form.resource_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.resource_type.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Subject -->
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold">{{ form.subject.label }}</label>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.subject.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Course Code -->
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold">{{ form.course_code.label }}</label>
+                                    {{ form.course_code }}
+                                    {% if form.course_code.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.course_code.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">e.g., MATH101, CS202</div>
+                                </div>
+
+                                <!-- Course Name -->
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold">{{ form.course_name.label }}</label>
+                                    {{ form.course_name }}
+                                    {% if form.course_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.course_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Upload Section -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 pb-2 border-bottom">
+                                <i class="fas fa-file-upload text-success me-2"></i>File Upload
+                            </h5>
+
+                            <!-- Main File -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.file.label }}</label>
+                                {{ form.file }}
+                                {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.file.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Supported formats: PDF, DOC, PPT, XLS, TXT, ZIP, Images, Videos<br>
+                                    Maximum file size: 100MB
+                                </div>
+                            </div>
+
+                            <!-- Thumbnail -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.thumbnail.label }}</label>
+                                {{ form.thumbnail }}
+                                {% if form.thumbnail.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.thumbnail.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    A preview image for your resource (recommended: 400x300px)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Details -->
+                        <div class="mb-4">
+                            <h5 class="mb-3 pb-2 border-bottom">
+                                <i class="fas fa-cogs text-warning me-2"></i>Additional Details
+                            </h5>
+
+                            <div class="row">
+                                <!-- Year & Semester -->
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold">{{ form.year.label }}</label>
+                                    {{ form.year }}
+                                    {% if form.year.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.year.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-bold">{{ form.semester.label }}</label>
+                                    {{ form.semester }}
+                                    {% if form.semester.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.semester.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Instructor -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.instructor.label }}</label>
+                                {{ form.instructor }}
+                                {% if form.instructor.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.instructor.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.tags.label }}</label>
+                                {{ form.tags }}
+                                {% if form.tags.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.tags.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Add relevant tags separated by commas (e.g., midterm, final, solutions, practice)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms & Conditions -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I confirm that I have the right to share this resource and it complies with
+                                <a href="#" class="text-decoration-none">campus policies</a>.
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn {{ btn_class|default:'btn-primary' }} btn-lg">
+                                <i class="fas fa-{{ action|lower }} me-2"></i>{{ btn_text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Guidelines -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5>Upload Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">Resource Type *</label>
-                            <select class="form-select" name="resource_type" required>
-                                <option value="">Select Type</option>
-                                <option value="notes">Notes</option>
-                                <option value="past_paper">Past Paper</option>
-                                <option value="slides">Slides</option>
-                                <option value="textbook">Textbook</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <h6 class="fw-bold text-success mb-3">Do's</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Share your own notes and materials</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Use descriptive titles and descriptions</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Include course code and subject</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Add relevant tags for better search</li>
+                            </ul>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Subject *</label>
-                            <select class="form-select" name="subject" required>
-                                <option value="">Select Subject</option>
-                                <option value="programming">Programming</option>
-                                <option value="mathematics">Mathematics</option>
-                                <option value="physics">Physics</option>
-                                <option value="chemistry">Chemistry</option>
-                                <option value="business">Business</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <h6 class="fw-bold text-danger mb-3"> Don'ts</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>Don't upload copyrighted materials</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>Don't share exam papers before deadlines</li>
+                                <li class="mb-2"><i class="fas fa-times text-danger me-2"></i>Don't upload malicious or inappropriate files</li>
+                                <li><i class="fas fa-times text-danger me-2"></i>Don't spam with low-quality content</li>
+                            </ul>
                         </div>
                     </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Course Code *</label>
-                        <input type="text" class="form-control" name="course_code" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">File *</label>
-                        <input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" required>
-                        <small class="text-muted">Accepted formats: PDF, DOC, DOCX, PPT, PPTX, TXT</small>
-                    </div>
-
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        By uploading, you confirm this material is appropriate for academic sharing.
-                    </div>
-
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'resources:list' %}" class="btn btn-secondary me-md-2">
-                            Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload me-2"></i>Upload Resource
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- JavaScript for File Preview -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap classes to form fields
+        const formControls = document.querySelectorAll('input:not([type="checkbox"]), select, textarea');
+        formControls.forEach(control => {
+            if (!control.classList.contains('form-control') &&
+                !control.classList.contains('form-select') &&
+                control.tagName !== 'BUTTON') {
+
+                if (control.tagName === 'SELECT') {
+                    control.classList.add('form-select');
+                } else if (control.tagName === 'INPUT' && control.type === 'file') {
+                    control.classList.add('form-control');
+                } else if (control.tagName !== 'INPUT' ||
+                          (control.type !== 'checkbox' && control.type !== 'radio')) {
+                    control.classList.add('form-control');
+                }
+            }
+        });
+
+        // File size validation
+        const fileInput = document.querySelector('input[type="file"][name="file"]');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const maxSize = 100 * 1024 * 1024; // 100MB
+                    if (file.size > maxSize) {
+                        alert('File size must be under 100MB. Please choose a smaller file.');
+                        this.value = '';
+                    }
+                }
+            });
+        }
+
+        // Form validation
+        const form = document.getElementById('resourceForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Check terms checkbox
+                const termsCheck = document.getElementById('termsCheck');
+                if (!termsCheck.checked) {
+                    e.preventDefault();
+                    alert('Please agree to the terms and conditions.');
+                    termsCheck.focus();
+                    return false;
+                }
+
+                // Check required fields (marked with required attribute by Django)
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+                requiredFields.forEach(field => {
+                    if (field.type === 'checkbox') {
+                        if (!field.checked) {
+                            isValid = false;
+                            field.classList.add('is-invalid');
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    } else if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields.');
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Real-time validation
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (this.type === 'checkbox') {
+                        if (!this.checked) {
+                            this.classList.add('is-invalid');
+                        } else {
+                            this.classList.remove('is-invalid');
+                        }
+                    } else if (!this.value.trim()) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+        }
+    });
+</script>
+
+<!-- Custom CSS -->
+<style>
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+
+    .is-invalid:focus {
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .invalid-feedback {
+        display: block;
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+</style>
 {% endblock %}

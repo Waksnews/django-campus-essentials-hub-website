@@ -1,0 +1,111 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Resource Categories - Campus Resources{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold mb-3">📂 Resource Categories</h1>
+        <p class="lead text-muted mb-4">
+            Browse resources by category and subject
+        </p>
+    </div>
+
+    <!-- Categories Grid -->
+    {% for resource_type, categories in grouped_categories.items %}
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-header bg-white border-bottom">
+            <h3 class="mb-0">
+                <i class="fas fa-folder me-2 text-primary"></i>
+                {{ resource_type|title }} Resources
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for category in categories %}
+                <div class="col">
+                    <div class="card h-100 border-0 bg-light">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0">{{ category.subject }}</h5>
+                                <span class="badge bg-primary">{{ category.count }}</span>
+                            </div>
+                            <p class="text-muted small mb-3">
+                                {{ category.total_downloads|default:0 }} total downloads
+                            </p>
+                            <a href="{% url 'resources:list' %}?type={{ resource_type }}&subject={{ category.subject }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                Browse Resources
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Quick Stats -->
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-layer-group fa-3x text-primary mb-3"></i>
+                    <h3>{{ total_categories }}</h3>
+                    <p class="text-muted mb-0">Total Categories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-3x text-success mb-3"></i>
+                    <h3>{{ grouped_categories|length }}</h3>
+                    <p class="text-muted mb-0">Resource Types</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                    <h3>Top Contributors</h3>
+                    <p class="text-muted mb-0">Active Community</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="card border-0 shadow-sm mt-5">
+        <div class="card-body text-center p-5">
+            <i class="fas fa-share-alt fa-4x text-primary mb-4"></i>
+            <h2 class="mb-3">Share Your Knowledge</h2>
+            <p class="lead text-muted mb-4">
+                Help your fellow students by uploading your study materials, notes, and resources.
+            </p>
+            {% if user.is_authenticated %}
+            <a href="{% url 'resources:upload' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-upload me-2"></i>Upload Resources
+            </a>
+            {% else %}
+            <a href="{% url 'accounts:login' %}?next={% url 'resources:upload' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Login to Upload
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+</style>
+{% endblock %}

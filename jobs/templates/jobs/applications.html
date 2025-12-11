@@ -1,0 +1,290 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load job_filters %}
+{% block title %}Applications for {{ job.title }} - Campus Jobs{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-6 fw-bold mb-2">Applications</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'jobs:list' %}">Jobs</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'jobs:detail' job.id %}">{{ job.title|truncatechars:30 }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Applications</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{% url 'jobs:detail' job.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Job
+        </a>
+    </div>
+
+    <!-- Job Summary -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="fw-bold mb-1">{{ job.title }}</h5>
+                    <p class="text-muted mb-2">{{ job.description|truncatewords:30 }}</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <span class="badge bg-primary">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                        </span>
+                        <span class="badge {% if job.budget_type == 'fixed' %}bg-success{% else %}bg-warning{% endif %}">
+                            ${{ job.budget|floatformat:2 }}
+                            {% if job.budget_type == 'hourly' %}/hr{% endif %}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="fas fa-users me-1"></i>{{ applications.count }} application{{ applications.count|pluralize }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <span class="badge {% if job.status == 'open' %}bg-success{% elif job.status == 'in_progress' %}bg-primary{% else %}bg-secondary{% endif %} fs-6">
+                        {{ job.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Applicants ({{ applications.count }})</h5>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-2"></i>Filter by Status
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?">All Applications</a></li>
+                        <li><a class="dropdown-item" href="?status=pending">Pending Only</a></li>
+                        <li><a class="dropdown-item" href="?status=accepted">Accepted</a></li>
+                        <li><a class="dropdown-item" href="?status=rejected">Rejected</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        {% if applications %}
+        <div class="card-body p-0">
+            {% for application in applications %}
+            <div class="application-item border-bottom p-4 {% if forloop.last %}border-bottom-0{% endif %}">
+                <div class="row align-items-center">
+                    <!-- Applicant Info -->
+                    <div class="col-lg-4 mb-3 mb-lg-0">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar-circle bg-primary text-white me-3">
+                                {{ application.applicant.username|first|upper }}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ application.applicant.get_full_name|default:application.applicant.username }}</h6>
+                                <p class="text-muted small mb-1">
+                                    <i class="fas fa-envelope me-1"></i>{{ application.applicant.email }}
+                                </p>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-clock me-1"></i>Applied {{ application.applied_at|timesince }} ago
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Application Details -->
+                    <div class="col-lg-5 mb-3 mb-lg-0">
+                        <div class="mb-2">
+                            <strong class="d-block mb-1">Cover Letter:</strong>
+                            <p class="mb-2 text-muted">{{ application.cover_letter|truncatewords:30 }}</p>
+                            <a href="#" class="text-decoration-none small view-cover-letter" 
+                               data-cover-letter="{{ application.cover_letter }}"
+                               data-applicant="{{ application.applicant.get_full_name|default:application.applicant.username }}">
+                                <i class="fas fa-expand me-1"></i>View Full Cover Letter
+                            </a>
+                        </div>
+                        
+                        {% if application.proposed_rate %}
+                        <div>
+                            <strong class="d-block mb-1">Proposed Rate:</strong>
+                            <span class="badge bg-info">
+                                ${{ application.proposed_rate|floatformat:2 }}
+                                {% if job.budget_type == 'hourly' %}/hr{% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-lg-3">
+                        <div class="text-center">
+                            <span class="badge bg-{{ application.get_status_color }} fs-6 mb-3">
+                                {{ application.get_status_display }}
+                            </span>
+                            
+                            {% if application.status == 'pending' %}
+                            <form method="POST" action="{% url 'jobs:update_application' application.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="accepted">
+                                <button type="submit" class="btn btn-success btn-sm w-100 mb-2" 
+                                        onclick="return confirm('Accept this application? This will reject all other applications.')">
+                                    <i class="fas fa-check me-2"></i>Accept
+                                </button>
+                            </form>
+                            <form method="POST" action="{% url 'jobs:update_application' application.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="status" value="rejected">
+                                <button type="submit" class="btn btn-danger btn-sm w-100" 
+                                        onclick="return confirm('Reject this application?')">
+                                    <i class="fas fa-times me-2"></i>Reject
+                                </button>
+                            </form>
+                            {% elif application.status == 'accepted' %}
+                            <div class="alert alert-success small mb-0">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Contact applicant to start work
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card-body text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-users fa-4x text-muted"></i>
+            </div>
+            <h4 class="mb-3">No applications yet</h4>
+            <p class="text-muted mb-4">Share your job post to attract applicants</p>
+            <a href="{% url 'jobs:detail' job.id %}" class="btn btn-primary">
+                <i class="fas fa-share-alt me-2"></i>Share Job
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Application Stats -->
+    {% if applications %}
+    <div class="row mt-4">
+        <div class="col-md-3 col-6">
+            <div class="card bg-primary bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-1">{{ applications.count }}</h3>
+                    <p class="text-muted small mb-0">Total</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-warning bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-1">{{ applications|filter_status:'pending'|length }}</h3>
+                    <p class="text-muted small mb-0">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-success bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-1">{{ applications|filter_status:'accepted'|length }}</h3>
+                    <p class="text-muted small mb-0">Accepted</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card bg-danger bg-opacity-10 border-0">
+                <div class="card-body text-center">
+                    <h3 class="text-danger mb-1">{{ applications|filter_status:'rejected'|length }}</h3>
+                    <p class="text-muted small mb-0">Rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal for Full Cover Letter -->
+<div class="modal fade" id="coverLetterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cover Letter</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="mb-3" id="applicantName"></h6>
+                <div id="fullCoverLetter" class="border rounded p-3 bg-light" style="min-height: 200px; max-height: 400px; overflow-y: auto;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+    .avatar-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .application-item {
+        transition: background-color 0.3s;
+    }
+    .application-item:hover {
+        background-color: #f8f9fa;
+    }
+    .application-item:last-child {
+        border-bottom: none !important;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // View full cover letter modal
+        const viewButtons = document.querySelectorAll('.view-cover-letter');
+        const coverLetterModal = new bootstrap.Modal(document.getElementById('coverLetterModal'));
+        
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const coverLetter = this.getAttribute('data-cover-letter');
+                const applicantName = this.getAttribute('data-applicant');
+                
+                document.getElementById('applicantName').textContent = `From: ${applicantName}`;
+                document.getElementById('fullCoverLetter').textContent = coverLetter;
+                
+                coverLetterModal.show();
+            });
+        });
+        
+        // Confirm actions
+        const actionForms = document.querySelectorAll('form[action*="update_application"]');
+        actionForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const status = this.querySelector('input[name="status"]').value;
+                if (status === 'accepted') {
+                    if (!confirm('Are you sure you want to accept this application? This will automatically reject all other applications for this job.')) {
+                        e.preventDefault();
+                    }
+                } else if (status === 'rejected') {
+                    if (!confirm('Are you sure you want to reject this application?')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

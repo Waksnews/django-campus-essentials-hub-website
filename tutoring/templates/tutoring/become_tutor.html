@@ -1,178 +1,499 @@
-<!-- tutoring/templates/tutoring/become_tutor.html -->
-
 {% extends 'core/base.html' %}
 {% load static %}
-{% load crispy_forms_tags %}
 
-{% block title %}Become a Tutor - Campus Essentials Hub{% endblock %}
+{% block title %}Become a Tutor - Campus Tutoring{% endblock %}
+
+{% block extra_css %}
+<style>
+    .registration-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .step-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        position: relative;
+    }
+    .step-indicator::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 10px;
+        transition: all 0.3s;
+    }
+    .step.active .step-number {
+        background: #0d6efd;
+        color: white;
+        transform: scale(1.1);
+    }
+    .step.completed .step-number {
+        background: #198754;
+        color: white;
+    }
+    .step-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: center;
+    }
+    .step.active .step-label {
+        color: #0d6efd;
+        font-weight: bold;
+    }
+    .form-section {
+        display: none;
+    }
+    .form-section.active {
+        display: block;
+        animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .subject-checkbox {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .subject-checkbox:hover {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    .subject-checkbox.selected {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    .form-check-input:checked + .subject-checkbox {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    .rate-slider {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: #e9ecef;
+        outline: none;
+    }
+    .rate-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0d6efd;
+        cursor: pointer;
+    }
+    .rate-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-user-graduate me-2"></i>
-                    Become a Campus Tutor
-                </h4>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-6 fw-bold mb-3">Become a Campus Tutor</h1>
+                <p class="lead text-muted">
+                    Share your knowledge, help fellow students, and earn money!
+                </p>
             </div>
-            <div class="card-body p-5">
-                <div class="text-center mb-5">
-                    <div class="display-1 text-success mb-3">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </div>
-                    <h2>Share Your Knowledge, Earn Extra Income</h2>
-                    <p class="lead text-muted">Help fellow students succeed while building your tutoring profile.</p>
+
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Personal Info</div>
                 </div>
-
-                <div class="row mb-5">
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-money-bill-wave fa-2x"></i>
-                        </div>
-                        <h5>Earn Income</h5>
-                        <p class="text-muted">Set your own hourly rate and earn while you study</p>
-                    </div>
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-users fa-2x"></i>
-                        </div>
-                        <h5>Build Reputation</h5>
-                        <p class="text-muted">Gain valuable experience and build your academic reputation</p>
-                    </div>
-                    <div class="col-md-4 text-center mb-4">
-                        <div class="feature-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
-                            <i class="fas fa-award fa-2x"></i>
-                        </div>
-                        <h5>Earn Badges</h5>
-                        <p class="text-muted">Get recognized with tutor badges and achievements</p>
-                    </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Subjects & Rates</div>
                 </div>
-
-                <div class="alert alert-info mb-4">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Tutor Requirements:</strong> Minimum GPA of 3.0, at least one year of university study, and proficiency in the subjects you want to teach.
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Qualifications</div>
                 </div>
-
-                <h4 class="mb-4">Tutor Application Form</h4>
-
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            {{ form.subjects|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.primary_subject|as_crispy_field }}
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            {{ form.year_of_study|as_crispy_field }}
-                        </div>
-                        <div class="col-md-6">
-                            {{ form.hourly_rate|as_crispy_field }}
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Your Bio *</label>
-                        <textarea class="form-control" name="bio" rows="4" required placeholder="Tell students about yourself, your teaching style, and why you'd make a great tutor..."></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Qualifications & Experience *</label>
-                        <textarea class="form-control" name="qualifications" rows="3" required placeholder="List your academic achievements, relevant courses, tutoring experience..."></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Availability *</label>
-                        <textarea class="form-control" name="availability" rows="3" required placeholder="e.g., Weekdays 4-8 PM, Weekends 10 AM - 6 PM"></textarea>
-                    </div>
-
-                    <!-- Sample Work (Optional) -->
-                    <div class="mb-4">
-                        <label class="form-label">Sample Work (Optional)</label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" name="sample_work" accept=".pdf,.doc,.docx">
-                            <button class="btn btn-outline-secondary" type="button">
-                                <i class="fas fa-upload"></i>
-                            </button>
-                        </div>
-                        <small class="text-muted">Upload a sample of your notes or teaching materials (PDF/DOC)</small>
-                    </div>
-
-                    <!-- Agreement -->
-                    <div class="alert alert-warning">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="agreeTerms" required>
-                            <label class="form-check-label" for="agreeTerms">
-                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Tutor Terms & Conditions</a>. I confirm that all information provided is accurate and I will maintain professional conduct as a tutor.
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'tutoring:tutors' %}" class="btn btn-secondary me-md-2">
-                            Cancel
-                        </a>
-                        <button type="submit" class="btn btn-success btn-lg">
-                            <i class="fas fa-paper-plane me-2"></i>Submit Application
-                        </button>
-                    </div>
-                </form>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Review & Submit</div>
+                </div>
             </div>
-        </div>
 
-        <!-- Success Stories -->
-        <div class="card mt-4">
-            <div class="card-body">
-                <h4 class="mb-4">Success Stories</h4>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
-                                    <img src="{% static 'images/tutor1.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
-                                    <div>
-                                        <h6 class="mb-0">John M.</h6>
-                                        <small class="text-muted">Engineering Tutor</small>
+            <!-- Registration Form -->
+            <div class="card registration-card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" enctype="multipart/form-data" id="tutorForm">
+                        {% csrf_token %}
+
+                        <!-- Step 1: Personal Info -->
+                        <div class="form-section active" data-step="1">
+                            <h4 class="mb-4">Personal Information</h4>
+
+                            <div class="row mb-4">
+                                <!-- Profile Picture -->
+                                <div class="col-md-4 mb-4">
+                                    <label class="form-label fw-bold">Profile Picture</label>
+                                    <div class="text-center">
+                                        <div class="profile-preview mb-3">
+                                            <div class="avatar-preview rounded-circle bg-light border d-flex align-items-center justify-content-center mx-auto"
+                                                 style="width: 150px; height: 150px; overflow: hidden;">
+                                                <i class="fas fa-user fa-3x text-muted"></i>
+                                                <img id="profilePreview" class="img-fluid d-none" alt="Preview">
+                                            </div>
+                                        </div>
+                                        {{ form.profile_picture }}
+                                        <div class="form-text">
+                                            Recommended: 400x400px, Max 5MB
+                                        </div>
                                     </div>
                                 </div>
-                                <p class="mb-0">"Tutoring helped me master my own subjects while earning extra income. I've helped 50+ students improve their grades!"</p>
-                                <div class="mt-2">
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <span class="ms-2">4.9 rating</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center mb-3">
-                                    <img src="{% static 'images/tutor2.jpg' %}" class="rounded-circle me-3" width="60" height="60" alt="">
-                                    <div>
-                                        <h6 class="mb-0">Sarah K.</h6>
-                                        <small class="text-muted">Programming Tutor</small>
+
+                                <!-- Basic Info -->
+                                <div class="col-md-8">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Year of Study</label>
+                                            {{ form.year_of_study }}
+                                            {% if form.year_of_study.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.year_of_study.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Primary Subject</label>
+                                            {{ form.primary_subject }}
+                                            {% if form.primary_subject.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.primary_subject.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Contact Info -->
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Contact Email</label>
+                                            {{ form.contact_email }}
+                                            <div class="form-text">Optional: Different from account email</div>
+                                            {% if form.contact_email.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.contact_email.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Contact Phone</label>
+                                            {{ form.contact_phone }}
+                                            <div class="form-text">Optional: For direct contact</div>
+                                            {% if form.contact_phone.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {% for error in form.contact_phone.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Preferred Contact Method</label>
+                                        {{ form.preferred_contact }}
+                                        {% if form.preferred_contact.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.preferred_contact.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                <p class="mb-0">"The platform made it easy to find students. I've earned over KSH 100,000 while still in university!"</p>
-                                <div class="mt-2">
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star text-warning"></i>
-                                    <i class="fas fa-star-half-alt text-warning"></i>
-                                    <span class="ms-2">4.7 rating</span>
+                            </div>
+
+                            <!-- Navigation -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary" disabled>Previous</button>
+                                <button type="button" class="btn btn-primary next-step" data-next="2">
+                                    Next: Subjects & Rates <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Subjects & Rates -->
+                        <div class="form-section" data-step="2">
+                            <h4 class="mb-4">Subjects & Rates</h4>
+
+                            <!-- Subjects -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold mb-3">Select Subjects You Can Tutor</label>
+                                <p class="text-muted mb-3">Select all subjects you're comfortable teaching</p>
+
+                                <div class="row">
+                                    {% for subject in form.subjects.field.queryset %}
+                                    <div class="col-md-4 col-sm-6 mb-3">
+                                        <div class="subject-checkbox">
+                                            <input type="checkbox"
+                                                   name="subjects"
+                                                   value="{{ subject.id }}"
+                                                   id="subject_{{ subject.id }}"
+                                                   class="form-check-input d-none">
+                                            <label for="subject_{{ subject.id }}" class="mb-0 d-block">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <i class="{{ subject.icon|default:'fas fa-book' }} fa-lg"></i>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ subject.name }}</strong>
+                                                        <div class="small text-muted">{{ subject.category }}</div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            No subjects available. Please contact admin.
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% if form.subjects.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.subjects.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Hourly Rate -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Set Your Hourly Rate</label>
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="rate-display text-center mb-3 mb-md-0">
+                                            $<span id="rateValue">{{ form.hourly_rate.value|default:20 }}</span>/hr
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.hourly_rate }}
+                                        <div class="d-flex justify-content-between small text-muted mt-2">
+                                            <span>$5/hr</span>
+                                            <span>$100/hr</span>
+                                        </div>
+                                        {% if form.hourly_rate.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.hourly_rate.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Competitive rates: Students typically pay $15-$40 per hour
                                 </div>
                             </div>
+
+                            <!-- Navigation -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="1">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="3">
+                                    Next: Qualifications <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Qualifications -->
+                        <div class="form-section" data-step="3">
+                            <h4 class="mb-4">Qualifications & Experience</h4>
+
+                            <!-- Bio -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">About You</label>
+                                {{ form.bio }}
+                                <div class="form-text">
+                                    Introduce yourself! Tell students about your teaching style, personality, and why you'd be a great tutor.
+                                </div>
+                                {% if form.bio.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.bio.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Qualifications -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Qualifications</label>
+                                {{ form.qualifications }}
+                                <div class="form-text">
+                                    List your relevant courses, certifications, grades, or achievements.
+                                </div>
+                                {% if form.qualifications.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.qualifications.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Teaching Experience -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Teaching Experience</label>
+                                {{ form.teaching_experience }}
+                                <div class="form-text">
+                                    Describe any previous tutoring or teaching experience.
+                                </div>
+                                {% if form.teaching_experience.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.teaching_experience.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Navigation -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="2">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="4">
+                                    Next: Review & Submit <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Review -->
+                        <div class="form-section" data-step="4">
+                            <h4 class="mb-4">Review & Submit</h4>
+
+                            <!-- Summary -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Application Summary</h5>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Year of Study:</strong>
+                                            <div id="reviewYear" class="text-muted"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Primary Subject:</strong>
+                                            <div id="reviewPrimarySubject" class="text-muted"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Hourly Rate:</strong>
+                                            <div id="reviewRate" class="text-muted"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Subjects:</strong>
+                                            <div id="reviewSubjects" class="text-muted"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <strong>About You:</strong>
+                                        <div id="reviewBio" class="text-muted"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terms -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" class="text-decoration-none">Tutor Agreement</a> and confirm that all information provided is accurate.
+                                </label>
+                            </div>
+
+                            <!-- Navigation -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="3">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Application
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Benefits Section -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="mb-4">Why Become a Campus Tutor?</h5>
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                            </div>
+                            <h6>Earn Money</h6>
+                            <p class="small text-muted">Set your own rates and earn on your schedule</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-graduation-cap fa-2x text-primary"></i>
+                            </div>
+                            <h6>Reinforce Learning</h6>
+                            <p class="small text-muted">Teaching helps deepen your own understanding</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-users fa-2x text-warning"></i>
+                            </div>
+                            <h6>Build Network</h6>
+                            <p class="small text-muted">Connect with students and build relationships</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="mb-3">
+                                <i class="fas fa-award fa-2x text-danger"></i>
+                            </div>
+                            <h6>Enhance Resume</h6>
+                            <p class="small text-muted">Add valuable teaching experience to your profile</p>
                         </div>
                     </div>
                 </div>
@@ -181,53 +502,215 @@
     </div>
 </div>
 
-<!-- Terms Modal -->
-<div class="modal fade" id="termsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Tutor Terms & Conditions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <h6>1. Tutor Responsibilities</h6>
-                <p>As a tutor, you agree to:</p>
-                <ul>
-                    <li>Provide accurate information about your qualifications</li>
-                    <li>Maintain professional conduct with students</li>
-                    <li>Be punctual for scheduled sessions</li>
-                    <li>Provide quality tutoring services</li>
-                    <li>Respect student privacy and confidentiality</li>
-                </ul>
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profile picture preview
+        const profileInput = document.querySelector('input[name="profile_picture"]');
+        const profilePreview = document.getElementById('profilePreview');
+        const avatarPreview = document.querySelector('.avatar-preview i');
 
-                <h6>2. Payment Terms</h6>
-                <ul>
-                    <li>You set your own hourly rate</li>
-                    <li>Payments are processed through the platform</li>
-                    <li>Platform fee: 15% of each session</li>
-                    <li>Payments are released 24 hours after session completion</li>
-                </ul>
+        if (profileInput) {
+            profileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profilePreview.src = e.target.result;
+                        profilePreview.classList.remove('d-none');
+                        avatarPreview.classList.add('d-none');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
 
-                <h6>3. Code of Conduct</h6>
-                <ul>
-                    <li>No discrimination based on race, gender, religion, etc.</li>
-                    <li>No inappropriate behavior or communication</li>
-                    <li>Academic integrity must be maintained</li>
-                    <li>No completion of assignments for students</li>
-                </ul>
+        // Hourly rate slider
+        const rateInput = document.querySelector('input[name="hourly_rate"]');
+        const rateValue = document.getElementById('rateValue');
 
-                <h6>4. Platform Rules</h6>
-                <ul>
-                    <li>Keep communication on the platform for safety</li>
-                    <li>Report any issues or concerns immediately</li>
-                    <li>Maintain a minimum 4.0 rating to remain active</li>
-                    <li>Respond to booking requests within 24 hours</li>
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
+        if (rateInput && rateValue) {
+            rateInput.addEventListener('input', function() {
+                rateValue.textContent = this.value;
+            });
+        }
+
+        // Step navigation
+        const steps = document.querySelectorAll('.step');
+        const formSections = document.querySelectorAll('.form-section');
+        const nextButtons = document.querySelectorAll('.next-step');
+        const prevButtons = document.querySelectorAll('.prev-step');
+
+        function goToStep(stepNumber) {
+            // Update step indicator
+            steps.forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('active', 'completed');
+
+                if (stepNum < stepNumber) {
+                    step.classList.add('completed');
+                } else if (stepNum === stepNumber) {
+                    step.classList.add('active');
+                }
+            });
+
+            // Show/hide form sections
+            formSections.forEach(section => {
+                section.classList.remove('active');
+                if (parseInt(section.dataset.step) === stepNumber) {
+                    section.classList.add('active');
+                }
+            });
+
+            // Update review summary
+            if (stepNumber === 4) {
+                updateReviewSummary();
+            }
+        }
+
+        // Next button click
+        nextButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const currentSection = this.closest('.form-section');
+                const currentStep = parseInt(currentSection.dataset.step);
+                const nextStep = parseInt(this.dataset.next);
+
+                // Validate current step
+                if (validateStep(currentStep)) {
+                    goToStep(nextStep);
+                }
+            });
+        });
+
+        // Previous button click
+        prevButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const prevStep = parseInt(this.dataset.prev);
+                goToStep(prevStep);
+            });
+        });
+
+        // Subject checkbox styling
+        const subjectCheckboxes = document.querySelectorAll('.subject-checkbox input[type="checkbox"]');
+        subjectCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const label = this.closest('.subject-checkbox');
+                if (this.checked) {
+                    label.classList.add('selected');
+                } else {
+                    label.classList.remove('selected');
+                }
+            });
+        });
+
+        // Update review summary
+        function updateReviewSummary() {
+            // Year of study
+            const yearSelect = document.querySelector('select[name="year_of_study"]');
+            if (yearSelect) {
+                const selectedOption = yearSelect.options[yearSelect.selectedIndex];
+                document.getElementById('reviewYear').textContent = selectedOption.text;
+            }
+
+            // Primary subject
+            const primarySubjectSelect = document.querySelector('select[name="primary_subject"]');
+            if (primarySubjectSelect) {
+                const selectedOption = primarySubjectSelect.options[primarySubjectSelect.selectedIndex];
+                document.getElementById('reviewPrimarySubject').textContent = selectedOption.text;
+            }
+
+            // Hourly rate
+            if (rateValue) {
+                document.getElementById('reviewRate').textContent = `$${rateValue.textContent}/hour`;
+            }
+
+            // Selected subjects
+            const selectedSubjects = Array.from(
+                document.querySelectorAll('.subject-checkbox input[type="checkbox"]:checked')
+            ).map(cb => {
+                const label = cb.nextElementSibling.querySelector('strong');
+                return label ? label.textContent : '';
+            }).filter(text => text);
+
+            document.getElementById('reviewSubjects').textContent =
+                selectedSubjects.length > 0 ? selectedSubjects.join(', ') : 'No subjects selected';
+
+            // Bio
+            const bioTextarea = document.querySelector('textarea[name="bio"]');
+            if (bioTextarea) {
+                document.getElementById('reviewBio').textContent = bioTextarea.value || 'Not provided';
+            }
+        }
+
+        // Step validation
+        function validateStep(step) {
+            let isValid = true;
+
+            switch(step) {
+                case 1:
+                    // Validate required fields in step 1
+                    const requiredStep1 = document.querySelectorAll('[data-step="1"] [required]');
+                    requiredStep1.forEach(field => {
+                        if (!field.value.trim()) {
+                            field.classList.add('is-invalid');
+                            isValid = false;
+                        } else {
+                            field.classList.remove('is-invalid');
+                        }
+                    });
+                    break;
+
+                case 2:
+                    // Validate at least one subject selected
+                    const selectedSubjects = document.querySelectorAll('.subject-checkbox input[type="checkbox"]:checked');
+                    if (selectedSubjects.length === 0) {
+                        alert('Please select at least one subject you can tutor.');
+                        isValid = false;
+                    }
+                    break;
+
+                case 3:
+                    // Validate bio and qualifications
+                    const bio = document.querySelector('textarea[name="bio"]');
+                    const qualifications = document.querySelector('textarea[name="qualifications"]');
+
+                    if (!bio.value.trim()) {
+                        bio.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        bio.classList.remove('is-invalid');
+                    }
+
+                    if (!qualifications.value.trim()) {
+                        qualifications.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        qualifications.classList.remove('is-invalid');
+                    }
+                    break;
+            }
+
+            if (!isValid) {
+                alert('Please fill in all required fields before proceeding.');
+            }
+
+            return isValid;
+        }
+
+        // Form submission
+        const form = document.getElementById('tutorForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const terms = document.getElementById('terms');
+                if (!terms.checked) {
+                    e.preventDefault();
+                    alert('Please agree to the terms and conditions.');
+                    terms.focus();
+                    return false;
+                }
+                return true;
+            });
+        }
+    });
+</script>
 {% endblock %}

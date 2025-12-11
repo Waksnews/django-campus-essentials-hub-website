@@ -1,0 +1,1021 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Book Session with {{ tutor.full_name }} - Campus Tutoring{% endblock %}
+
+{% block extra_css %}
+<style>
+    .booking-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    .booking-card {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .tutor-sidebar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+    }
+    .calendar-container {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .calendar-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 1rem;
+        text-align: center;
+    }
+    .calendar-day {
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .calendar-day:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+    .calendar-day.selected {
+        background-color: #4facfe;
+        color: white;
+        border-color: #4facfe;
+    }
+    .calendar-day.disabled {
+        background-color: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
+    .calendar-day.available {
+        background-color: #e7f5ff;
+        border-color: #4facfe;
+    }
+    .calendar-day.booked {
+        background-color: #ffeaea;
+        border-color: #ff6b6b;
+    }
+    .time-slot {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .time-slot:hover {
+        border-color: #4facfe;
+        background-color: #e7f5ff;
+    }
+    .time-slot.selected {
+        border-color: #4facfe;
+        background-color: #4facfe;
+        color: white;
+    }
+    .time-slot.booked {
+        border-color: #ff6b6b;
+        background-color: #ffeaea;
+        color: #ff6b6b;
+        cursor: not-allowed;
+    }
+    .booking-summary {
+        background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border-left: 5px solid #4facfe;
+    }
+    .step-progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    .step-progress::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+    .step-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+    }
+    .step.active .step-number {
+        background: #4facfe;
+        color: white;
+        transform: scale(1.1);
+    }
+    .step.completed .step-number {
+        background: #00f2fe;
+        color: white;
+    }
+    .step-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-align: center;
+    }
+    .step.active .step-label {
+        color: #4facfe;
+        font-weight: bold;
+    }
+    .form-section {
+        display: none;
+        animation: fadeIn 0.5s;
+    }
+    .form-section.active {
+        display: block;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .duration-option {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .duration-option:hover {
+        border-color: #4facfe;
+        background-color: #e7f5ff;
+    }
+    .duration-option.selected {
+        border-color: #4facfe;
+        background-color: #4facfe;
+        color: white;
+    }
+    .price-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #00f2fe;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+    .availability-badge {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .badge-available {
+        background-color: #28a745;
+    }
+    .badge-booked {
+        background-color: #dc3545;
+    }
+    .badge-unavailable {
+        background-color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Step Progress -->
+                <div class="step-progress">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Select Date</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Choose Time</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Session Details</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Confirm & Book</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Tutor Sidebar -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card booking-card h-100">
+                            <div class="tutor-sidebar">
+                                <div class="text-center mb-4">
+                                    {% if tutor.profile_picture %}
+                                    <img src="{{ tutor.profile_picture.url }}" 
+                                         alt="{{ tutor.full_name }}"
+                                         class="rounded-circle mb-3" 
+                                         style="width: 100px; height: 100px; object-fit: cover; border: 3px solid white;">
+                                    {% else %}
+                                    <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center mx-auto mb-3"
+                                         style="width: 100px; height: 100px;">
+                                        <h3 class="mb-0">{{ tutor.user.first_name|first|upper }}{{ tutor.user.last_name|first|upper }}</h3>
+                                    </div>
+                                    {% endif %}
+                                    <h4 class="mb-2">{{ tutor.full_name }}</h4>
+                                    <div class="d-flex align-items-center justify-content-center mb-3">
+                                        <span class="rating-stars me-2">
+                                            {{ tutor.rating|floatformat:1 }}
+                                            <i class="fas fa-star"></i>
+                                        </span>
+                                        <span class="badge bg-light text-dark">
+                                            {{ tutor.total_reviews }} reviews
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6><i class="fas fa-graduation-cap me-2"></i>Primary Subject</h6>
+                                    <p class="mb-0">{{ tutor.primary_subject.name }}</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6><i class="fas fa-clock me-2"></i>Hourly Rate</h6>
+                                    <h3 class="mb-0">${{ tutor.hourly_rate }}/hr</h3>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Availability Legend</h6>
+                                    <div class="small">
+                                        <p class="mb-1">
+                                            <span class="availability-badge badge-available"></span>
+                                            Available
+                                        </p>
+                                        <p class="mb-1">
+                                            <span class="availability-badge badge-booked"></span>
+                                            Booked
+                                        </p>
+                                        <p class="mb-0">
+                                            <span class="availability-badge badge-unavailable"></span>
+                                            Unavailable
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="text-center">
+                                    <a href="{% url 'tutoring:tutor_detail' tutor.id %}" 
+                                       class="btn btn-outline-light btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View Full Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Form -->
+                    <div class="col-lg-8">
+                        <div class="card booking-card">
+                            <div class="card-body p-4">
+                                {% if messages %}
+                                <div class="messages mb-4">
+                                    {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
+                                <form method="POST" id="bookingForm">
+                                    {% csrf_token %}
+                                    
+                                    <!-- Step 1: Select Date -->
+                                    <div class="form-section active" data-step="1">
+                                        <h4 class="mb-4">Select a Date</h4>
+                                        <p class="text-muted mb-4">
+                                            Choose a date for your session. Available dates are highlighted.
+                                        </p>
+
+                                        <!-- Calendar -->
+                                        <div class="calendar-container mb-4">
+                                            <div class="calendar-header">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <button type="button" class="btn btn-sm btn-light" id="prevMonth">
+                                                        <i class="fas fa-chevron-left"></i>
+                                                    </button>
+                                                    <h5 class="mb-0" id="currentMonth">Loading...</h5>
+                                                    <button type="button" class="btn btn-sm btn-light" id="nextMonth">
+                                                        <i class="fas fa-chevron-right"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered mb-0" id="calendarTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-center">Sun</th>
+                                                            <th class="text-center">Mon</th>
+                                                            <th class="text-center">Tue</th>
+                                                            <th class="text-center">Wed</th>
+                                                            <th class="text-center">Thu</th>
+                                                            <th class="text-center">Fri</th>
+                                                            <th class="text-center">Sat</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="calendarBody">
+                                                        <!-- Calendar will be populated by JavaScript -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Selected Date Display -->
+                                        <div class="booking-summary d-none" id="selectedDateDisplay">
+                                            <h6>Selected Date</h6>
+                                            <h4 id="selectedDateText" class="mb-0"></h4>
+                                            <input type="hidden" name="date" id="selectedDateInput">
+                                        </div>
+
+                                        <!-- Navigation -->
+                                        <div class="d-flex justify-content-between mt-4">
+                                            <a href="{% url 'tutoring:tutor_detail' tutor.id %}" 
+                                               class="btn btn-outline-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                                            </a>
+                                            <button type="button" class="btn btn-primary next-step" data-next="2" id="nextToTime" disabled>
+                                                Next: Choose Time <i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 2: Choose Time -->
+                                    <div class="form-section" data-step="2">
+                                        <h4 class="mb-4">Choose a Time Slot</h4>
+                                        <p class="text-muted mb-4">
+                                            Available time slots for <span id="selectedDateTitle" class="fw-bold"></span>
+                                        </p>
+
+                                        <!-- Time Slots -->
+                                        <div class="row" id="timeSlotsContainer">
+                                            <!-- Time slots will be populated by JavaScript -->
+                                        </div>
+
+                                        <!-- No Time Slots Message -->
+                                        <div class="alert alert-warning d-none" id="noSlotsMessage">
+                                            <i class="fas fa-calendar-times me-2"></i>
+                                            No available time slots for this date. Please select another date.
+                                        </div>
+
+                                        <!-- Navigation -->
+                                        <div class="d-flex justify-content-between mt-4">
+                                            <button type="button" class="btn btn-outline-secondary prev-step" data-prev="1">
+                                                <i class="fas fa-arrow-left me-2"></i>Change Date
+                                            </button>
+                                            <button type="button" class="btn btn-primary next-step" data-next="3" id="nextToDetails" disabled>
+                                                Next: Session Details <i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3: Session Details -->
+                                    <div class="form-section" data-step="3">
+                                        <h4 class="mb-4">Session Details</h4>
+                                        
+                                        <!-- Session Summary -->
+                                        <div class="booking-summary mb-4">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6>Date & Time</h6>
+                                                    <p class="mb-2" id="summaryDateTime"></p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6>Tutor</h6>
+                                                    <p class="mb-0">{{ tutor.full_name }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Duration Selection -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold mb-3">Session Duration</label>
+                                            <div class="row" id="durationOptions">
+                                                <div class="col-6 col-md-3 mb-3">
+                                                    <div class="duration-option" data-duration="30">
+                                                        <div class="fw-bold">30 min</div>
+                                                        <small class="text-muted">Quick help</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3 mb-3">
+                                                    <div class="duration-option selected" data-duration="60">
+                                                        <div class="fw-bold">1 hour</div>
+                                                        <small class="text-muted">Standard session</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3 mb-3">
+                                                    <div class="duration-option" data-duration="90">
+                                                        <div class="fw-bold">1.5 hours</div>
+                                                        <small class="text-muted">Extended help</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3 mb-3">
+                                                    <div class="duration-option" data-duration="120">
+                                                        <div class="fw-bold">2 hours</div>
+                                                        <small class="text-muted">In-depth session</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" name="duration" id="selectedDuration" value="60">
+                                        </div>
+
+                                        <!-- Subject Selection -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Subject</label>
+                                            <select name="subject" class="form-select" required>
+                                                <option value="">Select a subject</option>
+                                                {% for subject in tutor.subjects.all %}
+                                                <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <!-- Topic -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Topic (Optional)</label>
+                                            {{ form.topic }}
+                                            <div class="form-text">
+                                                What specific topic would you like help with?
+                                            </div>
+                                        </div>
+
+                                        <!-- Location -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Location</label>
+                                            {{ form.location }}
+                                        </div>
+
+                                        <!-- Location Details -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Location Details</label>
+                                            {{ form.location_details }}
+                                            <div class="form-text">
+                                                Room number, Zoom link, or specific meeting point
+                                            </div>
+                                        </div>
+
+                                        <!-- Notes -->
+                                        <div class="mb-4">
+                                            <label class="form-label fw-bold">Additional Notes (Optional)</label>
+                                            {{ form.notes }}
+                                            <div class="form-text">
+                                                Any specific questions or topics you want to cover
+                                            </div>
+                                        </div>
+
+                                        <!-- Price Calculation -->
+                                        <div class="card bg-light border-0 mb-4">
+                                            <div class="card-body text-center">
+                                                <div class="price-display mb-2">
+                                                    $<span id="sessionPrice">0.00</span>
+                                                </div>
+                                                <small class="text-muted">
+                                                    <span id="durationText">1 hour</span> × ${{ tutor.hourly_rate }}/hour
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Navigation -->
+                                        <div class="d-flex justify-content-between mt-4">
+                                            <button type="button" class="btn btn-outline-secondary prev-step" data-prev="2">
+                                                <i class="fas fa-arrow-left me-2"></i>Change Time
+                                            </button>
+                                            <button type="button" class="btn btn-primary next-step" data-next="4">
+                                                Next: Confirm Booking <i class="fas fa-arrow-right ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 4: Confirm Booking -->
+                                    <div class="form-section" data-step="4">
+                                        <h4 class="mb-4">Confirm Your Booking</h4>
+                                        
+                                        <!-- Final Summary -->
+                                        <div class="card border-primary mb-4">
+                                            <div class="card-body">
+                                                <h5 class="card-title mb-3">Booking Summary</h5>
+                                                
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <strong>Tutor:</strong>
+                                                        <p class="mb-0">{{ tutor.full_name }}</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <strong>Date & Time:</strong>
+                                                        <p class="mb-0" id="finalDateTime"></p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <strong>Duration:</strong>
+                                                        <p class="mb-0" id="finalDuration"></p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <strong>Location:</strong>
+                                                        <p class="mb-0" id="finalLocation"></p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row mb-3">
+                                                    <div class="col-md-12">
+                                                        <strong>Subject:</strong>
+                                                        <p class="mb-0" id="finalSubject"></p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <strong>Notes:</strong>
+                                                        <p class="mb-0 text-muted" id="finalNotes">None</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Total Price -->
+                                        <div class="text-center mb-4">
+                                            <h3>Total Amount</h3>
+                                            <div class="display-4 fw-bold text-primary">$<span id="finalPrice">0.00</span></div>
+                                            <p class="text-muted">Payment will be processed after session completion</p>
+                                        </div>
+
+                                        <!-- Terms -->
+                                        <div class="form-check mb-4">
+                                            <input class="form-check-input" type="checkbox" id="bookingTerms" required>
+                                            <label class="form-check-label" for="bookingTerms">
+                                                I agree to the <a href="#" class="text-decoration-none">tutoring terms</a> and understand that:
+                                                <ul class="small text-muted mt-2 mb-0">
+                                                    <li>Cancellations must be made at least 24 hours in advance</li>
+                                                    <li>No-shows may be charged a fee</li>
+                                                    <li>The tutor will confirm the session within 24 hours</li>
+                                                </ul>
+                                            </label>
+                                        </div>
+
+                                        <!-- Navigation -->
+                                        <div class="d-flex justify-content-between mt-4">
+                                            <button type="button" class="btn btn-outline-secondary prev-step" data-prev="3">
+                                                <i class="fas fa-arrow-left me-2"></i>Edit Details
+                                            </button>
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fas fa-calendar-check me-2"></i>Confirm Booking
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Step navigation
+        const steps = document.querySelectorAll('.step');
+        const formSections = document.querySelectorAll('.form-section');
+        const nextButtons = document.querySelectorAll('.next-step');
+        const prevButtons = document.querySelectorAll('.prev-step');
+        
+        // Selected data
+        let selectedDate = null;
+        let selectedTime = null;
+        let selectedDuration = 60;
+        const tutorHourlyRate = {{ tutor.hourly_rate }};
+        
+        // Initialize calendar
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        
+        function goToStep(stepNumber) {
+            // Update step indicator
+            steps.forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('active', 'completed');
+                
+                if (stepNum < stepNumber) {
+                    step.classList.add('completed');
+                } else if (stepNum === stepNumber) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // Show/hide form sections
+            formSections.forEach(section => {
+                section.classList.remove('active');
+                if (parseInt(section.dataset.step) === stepNumber) {
+                    section.classList.add('active');
+                }
+            });
+            
+            // Update summary for step 4
+            if (stepNumber === 4) {
+                updateFinalSummary();
+            }
+        }
+        
+        // Next button click
+        nextButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const currentSection = this.closest('.form-section');
+                const currentStep = parseInt(currentSection.dataset.step);
+                const nextStep = parseInt(this.dataset.next);
+                
+                if (validateStep(currentStep)) {
+                    goToStep(nextStep);
+                }
+            });
+        });
+        
+        // Previous button click
+        prevButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const prevStep = parseInt(this.dataset.prev);
+                goToStep(prevStep);
+            });
+        });
+        
+        // Validate step
+        function validateStep(step) {
+            switch(step) {
+                case 1:
+                    if (!selectedDate) {
+                        alert('Please select a date.');
+                        return false;
+                    }
+                    return true;
+                    
+                case 2:
+                    if (!selectedTime) {
+                        alert('Please select a time slot.');
+                        return false;
+                    }
+                    return true;
+                    
+                case 3:
+                    // Check required fields
+                    const subjectSelect = document.querySelector('select[name="subject"]');
+                    const locationSelect = document.querySelector('select[name="location"]');
+                    
+                    if (!subjectSelect.value) {
+                        alert('Please select a subject.');
+                        subjectSelect.focus();
+                        return false;
+                    }
+                    
+                    if (!locationSelect.value) {
+                        alert('Please select a location.');
+                        locationSelect.focus();
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                default:
+                    return true;
+            }
+        }
+        
+        // Calendar functionality
+        function renderCalendar(month, year) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            // Update month display
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                               "July", "August", "September", "October", "November", "December"];
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+            
+            // Clear calendar
+            const calendarBody = document.getElementById('calendarBody');
+            calendarBody.innerHTML = '';
+            
+            let date = 1;
+            let rows = 6; // Maximum rows for calendar
+            
+            for (let i = 0; i < rows; i++) {
+                const row = document.createElement('tr');
+                
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'calendar-day text-center';
+                    
+                    if (i === 0 && j < startingDay) {
+                        // Empty cells before first day
+                        cell.classList.add('disabled');
+                    } else if (date > daysInMonth) {
+                        // Empty cells after last day
+                        cell.classList.add('disabled');
+                    } else {
+                        const currentDate = new Date(year, month, date);
+                        const today = new Date();
+                        
+                        // Check if date is in past
+                        if (currentDate < today.setHours(0,0,0,0)) {
+                            cell.classList.add('disabled');
+                            cell.textContent = date;
+                        } else {
+                            cell.textContent = date;
+                            cell.dataset.date = currentDate.toISOString().split('T')[0];
+                            
+                            // Check availability
+                            const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                            const tutorAvailability = JSON.parse('{{ tutor.availability_slots|escapejs }}' || '{}');
+                            
+                            if (tutorAvailability[dayName] && tutorAvailability[dayName].length > 0) {
+                                cell.classList.add('available');
+                            } else {
+                                cell.classList.add('disabled');
+                            }
+                            
+                            // Add click event
+                            cell.addEventListener('click', function() {
+                                if (!this.classList.contains('disabled')) {
+                                    // Remove selection from other cells
+                                    document.querySelectorAll('.calendar-day').forEach(day => {
+                                        day.classList.remove('selected');
+                                    });
+                                    
+                                    // Select this cell
+                                    this.classList.add('selected');
+                                    
+                                    // Store selected date
+                                    selectedDate = this.dataset.date;
+                                    
+                                    // Show selected date
+                                    const dateDisplay = document.getElementById('selectedDateDisplay');
+                                    const dateText = document.getElementById('selectedDateText');
+                                    const dateInput = document.getElementById('selectedDateInput');
+                                    
+                                    const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    });
+                                    
+                                    dateText.textContent = formattedDate;
+                                    dateInput.value = selectedDate;
+                                    dateDisplay.classList.remove('d-none');
+                                    
+                                    // Enable next button
+                                    document.getElementById('nextToTime').disabled = false;
+                                    
+                                    // Update step 2 title
+                                    document.getElementById('selectedDateTitle').textContent = formattedDate;
+                                    
+                                    // Load time slots for selected date
+                                    loadTimeSlots(selectedDate);
+                                }
+                            });
+                        }
+                        date++;
+                    }
+                    row.appendChild(cell);
+                }
+                calendarBody.appendChild(row);
+            }
+        }
+        
+        // Load time slots for selected date
+        function loadTimeSlots(dateString) {
+            const date = new Date(dateString);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+            const tutorAvailability = JSON.parse('{{ tutor.availability_slots|escapejs }}' || '{}');
+            const availableHours = tutorAvailability[dayName] || [];
+            
+            const container = document.getElementById('timeSlotsContainer');
+            const noSlotsMessage = document.getElementById('noSlotsMessage');
+            
+            container.innerHTML = '';
+            
+            if (availableHours.length === 0) {
+                noSlotsMessage.classList.remove('d-none');
+                document.getElementById('nextToDetails').disabled = true;
+                return;
+            }
+            
+            noSlotsMessage.classList.add('d-none');
+            
+            // Create time slots
+            availableHours.forEach(hour => {
+                const time = `${hour.toString().padStart(2, '0')}:00`;
+                const col = document.createElement('div');
+                col.className = 'col-md-4 col-6 mb-3';
+                
+                const timeSlot = document.createElement('div');
+                timeSlot.className = 'time-slot';
+                timeSlot.textContent = time;
+                timeSlot.dataset.time = time;
+                
+                // Check if time slot is booked
+                // This would need server-side checking in production
+                
+                timeSlot.addEventListener('click', function() {
+                    if (!this.classList.contains('booked')) {
+                        // Remove selection from other slots
+                        document.querySelectorAll('.time-slot').forEach(slot => {
+                            slot.classList.remove('selected');
+                        });
+                        
+                        // Select this slot
+                        this.classList.add('selected');
+                        selectedTime = this.dataset.time;
+                        
+                        // Enable next button
+                        document.getElementById('nextToDetails').disabled = false;
+                        
+                        // Update session summary
+                        updateSessionSummary();
+                    }
+                });
+                
+                col.appendChild(timeSlot);
+                container.appendChild(col);
+            });
+        }
+        
+        // Update session summary for step 3
+        function updateSessionSummary() {
+            if (selectedDate && selectedTime) {
+                const date = new Date(selectedDate);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                const summaryText = `${formattedDate} at ${selectedTime}`;
+                document.getElementById('summaryDateTime').textContent = summaryText;
+                
+                // Update price
+                updatePrice();
+            }
+        }
+        
+        // Duration selection
+        const durationOptions = document.querySelectorAll('.duration-option');
+        durationOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selection from other options
+                durationOptions.forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Select this option
+                this.classList.add('selected');
+                selectedDuration = parseInt(this.dataset.duration);
+                document.getElementById('selectedDuration').value = selectedDuration;
+                
+                // Update duration text
+                let durationText = '';
+                if (selectedDuration === 30) durationText = '30 minutes';
+                else if (selectedDuration === 60) durationText = '1 hour';
+                else if (selectedDuration === 90) durationText = '1.5 hours';
+                else if (selectedDuration === 120) durationText = '2 hours';
+                
+                document.getElementById('durationText').textContent = durationText;
+                
+                // Update price
+                updatePrice();
+            });
+        });
+        
+        // Update price calculation
+        function updatePrice() {
+            if (selectedDuration && tutorHourlyRate) {
+                const hours = selectedDuration / 60;
+                const price = (hours * tutorHourlyRate).toFixed(2);
+                document.getElementById('sessionPrice').textContent = price;
+            }
+        }
+        
+        // Update final summary for step 4
+        function updateFinalSummary() {
+            // Date & Time
+            if (selectedDate && selectedTime) {
+                const date = new Date(selectedDate);
+                const formattedDate = date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                document.getElementById('finalDateTime').textContent = `${formattedDate} at ${selectedTime}`;
+            }
+            
+            // Duration
+            let durationText = '';
+            if (selectedDuration === 30) durationText = '30 minutes';
+            else if (selectedDuration === 60) durationText = '1 hour';
+            else if (selectedDuration === 90) durationText = '1.5 hours';
+            else if (selectedDuration === 120) durationText = '2 hours';
+            document.getElementById('finalDuration').textContent = durationText;
+            
+            // Location
+            const locationSelect = document.querySelector('select[name="location"]');
+            if (locationSelect) {
+                document.getElementById('finalLocation').textContent = locationSelect.options[locationSelect.selectedIndex].text;
+            }
+            
+            // Subject
+            const subjectSelect = document.querySelector('select[name="subject"]');
+            if (subjectSelect && subjectSelect.value) {
+                document.getElementById('finalSubject').textContent = subjectSelect.options[subjectSelect.selectedIndex].text;
+            }
+            
+            // Notes
+            const notesTextarea = document.querySelector('textarea[name="notes"]');
+            if (notesTextarea && notesTextarea.value.trim()) {
+                document.getElementById('finalNotes').textContent = notesTextarea.value;
+            }
+            
+            // Final price
+            if (selectedDuration && tutorHourlyRate) {
+                const hours = selectedDuration / 60;
+                const price = (hours * tutorHourlyRate).toFixed(2);
+                document.getElementById('finalPrice').textContent = price;
+            }
+        }
+        
+        // Calendar navigation
+        document.getElementById('prevMonth').addEventListener('click', function() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentMonth, currentYear);
+        });
+        
+        document.getElementById('nextMonth').addEventListener('click', function() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar(currentMonth, currentYear);
+        });
+        
+        // Form submission
+        const bookingForm = document.getElementById('bookingForm');
+        bookingForm.addEventListener('submit', function(e) {
+            const terms = document.getElementById('bookingTerms');
+            if (!terms.checked) {
+                e.preventDefault();
+                alert('Please agree to the terms and conditions.');
+                terms.focus();
+                return false;
+            }
+            
+            // Add time field to form
+            const timeInput = document.createElement('input');
+            timeInput.type = 'hidden';
+            timeInput.name = 'start_time';
+            timeInput.value = selectedTime;
+            this.appendChild(timeInput);
+            
+            return true;
+        });
+        
+        // Initialize
+        renderCalendar(currentMonth, currentYear);
+        updatePrice();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,293 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% load job_filters %}
+{% block title %}My Jobs - Campus Jobs{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold mb-3">My Jobs</h1>
+        <p class="lead text-muted">Manage your job postings and applications</p>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="myJobsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="posted-tab" data-bs-toggle="tab" data-bs-target="#posted" type="button">
+                <i class="fas fa-briefcase me-2"></i>Jobs Posted
+                <span class="badge bg-primary ms-2">{{ posted_jobs.count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="applications-tab" data-bs-toggle="tab" data-bs-target="#applications" type="button">
+                <i class="fas fa-paper-plane me-2"></i>My Applications
+                <span class="badge bg-success ms-2">{{ applications.count }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="myJobsTabsContent">
+        <!-- Posted Jobs Tab -->
+        <div class="tab-pane fade show active" id="posted" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h4 mb-0">Jobs You've Posted</h3>
+                <a href="{% url 'jobs:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Post New Job
+                </a>
+            </div>
+
+            {% if posted_jobs %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for job in posted_jobs %}
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm hover-lift">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge {% if job.status == 'open' %}bg-success{% elif job.status == 'in_progress' %}bg-primary{% elif job.status == 'completed' %}bg-secondary{% else %}bg-danger{% endif %} mb-2">
+                                        {{ job.get_status_display }}
+                                    </span>
+                                    <h5 class="card-title mb-1">
+                                        <a href="{% url 'jobs:detail' job.id %}" class="text-decoration-none text-dark">
+                                            {{ job.title|truncatechars:40 }}
+                                        </a>
+                                    </h5>
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                                    </p>
+                                </div>
+                                <span class="badge {% if job.budget_type == 'fixed' %}bg-success{% else %}bg-warning{% endif %}">
+                                    ${{ job.budget|floatformat:2 }}
+                                </span>
+                            </div>
+                            
+                            <p class="card-text text-muted small mb-3">
+                                {{ job.description|truncatewords:20 }}
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i>
+                                        {{ job.applications.count }} application{{ job.applications.count|pluralize }}
+                                    </small>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'jobs:applications' job.id %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'jobs:update' job.id %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'jobs:delete' job.id %}" class="btn btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-top">
+                            <small class="text-muted">
+                                Posted {{ job.created_at|timesince }} ago
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-briefcase fa-4x text-muted"></i>
+                </div>
+                <h4 class="mb-3">No jobs posted yet</h4>
+                <p class="text-muted mb-4">Start by posting your first job opportunity</p>
+                <a href="{% url 'jobs:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Post Your First Job
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Applications Tab -->
+        <div class="tab-pane fade" id="applications" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h4 mb-0">Your Applications</h3>
+                <a href="{% url 'jobs:list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-search me-2"></i>Browse Jobs
+                </a>
+            </div>
+
+            {% if applications %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Job</th>
+                            <th>Budget</th>
+                            <th>Your Rate</th>
+                            <th>Status</th>
+                            <th>Applied</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applications %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    <a href="{% url 'jobs:detail' application.job.id %}" class="text-decoration-none">
+                                        {{ application.job.title }}
+                                    </a>
+                                </strong><br>
+                                <small class="text-muted">{{ application.job.location }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if application.job.budget_type == 'fixed' %}bg-success{% else %}bg-warning{% endif %}">
+                                    ${{ application.job.budget|floatformat:2 }}
+                                    {% if application.job.budget_type == 'hourly' %}/hr{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if application.proposed_rate %}
+                                <span class="badge bg-info">
+                                    ${{ application.proposed_rate|floatformat:2 }}
+                                    {% if application.job.budget_type == 'hourly' %}/hr{% endif %}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ application.get_status_color }}">
+                                    {{ application.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ application.applied_at|timesince }} ago</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'jobs:detail' application.job.id %}" class="btn btn-outline-primary" title="View Job">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if application.status in 'pending,accepted' %}
+                                    <a href="{% url 'jobs:withdraw_application' application.id %}" class="btn btn-outline-danger" title="Withdraw">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Application Stats -->
+            <div class="row mt-4">
+                <div class="col-md-3 col-6">
+                    <div class="card bg-primary bg-opacity-10 border-0">
+                        <div class="card-body text-center">
+                            <h3 class="text-primary mb-1">{{ applications.count }}</h3>
+                            <p class="text-muted small mb-0">Total Applications</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card bg-warning bg-opacity-10 border-0">
+                        <div class="card-body text-center">
+                            <h3 class="text-warning mb-1">{{ applications|filter_status:'pending'|length }}</h3>
+                            <p class="text-muted small mb-0">Pending</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card bg-success bg-opacity-10 border-0">
+                        <div class="card-body text-center">
+                            <h3 class="text-success mb-1">{{ applications|filter_status:'accepted'|length }}</h3>
+                            <p class="text-muted small mb-0">Accepted</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card bg-danger bg-opacity-10 border-0">
+                        <div class="card-body text-center">
+                            <h3 class="text-danger mb-1">{{ applications|filter_status:'rejected'|length }}</h3>
+                            <p class="text-muted small mb-0">Rejected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-paper-plane fa-4x text-muted"></i>
+                </div>
+                <h4 class="mb-3">No applications yet</h4>
+                <p class="text-muted mb-4">Browse jobs and apply to get started</p>
+                <a href="{% url 'jobs:list' %}" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Browse Jobs
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+    .hover-lift {
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 1rem 1.5rem;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+        background-color: transparent;
+    }
+    .table th {
+        border-top: none;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .badge.bg-purple {
+        background-color: #6f42c1 !important;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Save active tab to localStorage
+        const tabEl = document.querySelector('button[data-bs-toggle="tab"]');
+        tabEl.addEventListener('shown.bs.tab', function (event) {
+            localStorage.setItem('activeJobTab', event.target.id);
+        });
+
+        // Retrieve active tab
+        const activeTab = localStorage.getItem('activeJobTab');
+        if (activeTab) {
+            const triggerEl = document.querySelector(`#${activeTab}`);
+            if (triggerEl) {
+                bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+            }
+        }
+    });
+</script>
+{% endblock %}

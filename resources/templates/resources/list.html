@@ -1,290 +1,364 @@
-<!-- resources/templates/resources/list.html -->
 {% extends 'core/base.html' %}
+{% load static %}
 
-{% block title %}Study Resources - Campus Essentials Hub{% endblock %}
-
-{% block extra_css %}
-<style>
-    .resource-card {
-        height: 100%;
-    }
-    .file-icon {
-        font-size: 3rem;
-        color: #6c757d;
-    }
-    .download-btn {
-        width: 100%;
-    }
-    .rating-badge {
-        font-size: 0.9rem;
-    }
-    .preview-thumb {
-        height: 150px;
-        object-fit: cover;
-        border-radius: 8px 8px 0 0;
-    }
-</style>
-{% endblock %}
+{% block title %}Campus Resources - Study Materials{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2><i class="fas fa-book me-2"></i>Study Resources</h2>
-        <p class="text-muted">Access notes, past papers, and study materials shared by students.</p>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="{% url 'resources:upload' %}" class="btn btn-primary">
-            <i class="fas fa-upload me-2"></i>Upload Resource
-        </a>
-    </div>
-</div>
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-5 fw-bold mb-3">📚 Campus Resources Hub</h1>
+            <p class="lead text-muted mb-4">
+                Access study materials, past papers, notes, and more shared by students
+            </p>
 
-<!-- Search & Filter -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-5">
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search resources..." id="searchInput">
-                    <button class="btn btn-primary" type="button">
-                        <i class="fas fa-search"></i>
-                    </button>
+            <!-- Search Bar -->
+            <form method="GET" class="row g-3 justify-content-center">
+                <div class="col-md-8">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <input type="text" class="form-control" name="search"
+                               placeholder="Search resources by title, course, or subject..."
+                               value="{{ search_query }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-1">{{ total_resources }}</h3>
+                    <p class="text-muted small mb-0">Total Resources</p>
                 </div>
             </div>
-            <div class="col-md-3">
-                <select class="form-select" id="typeFilter">
-                    <option value="">All Types</option>
-                    <option value="notes">Notes</option>
-                    <option value="past_paper">Past Papers</option>
-                    <option value="slides">Slides</option>
-                    <option value="textbook">Textbooks</option>
-                </select>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-1">{{ resources|length }}</h3>
+                    <p class="text-muted small mb-0">Showing</p>
+                </div>
             </div>
-            <div class="col-md-2">
-                <select class="form-select" id="subjectFilter">
-                    <option value="">All Subjects</option>
-                    <option value="programming">Programming</option>
-                    <option value="mathematics">Mathematics</option>
-                    <option value="physics">Physics</option>
-                    <option value="chemistry">Chemistry</option>
-                </select>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-1">{{ resource_types|length }}</h3>
+                    <p class="text-muted small mb-0">Resource Types</p>
+                </div>
             </div>
-            <div class="col-md-2">
-                <select class="form-select" id="sortFilter">
-                    <option value="newest">Newest First</option>
-                    <option value="popular">Most Popular</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="downloads">Most Downloads</option>
-                </select>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-info mb-1">{{ subjects|length }}</h3>
+                    <p class="text-muted small mb-0">Subjects</p>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Resource Grid -->
-<div class="row" id="resourcesContainer">
-    {% for resource in resources %}
-    <div class="col-md-4 mb-4 resource-item"
-         data-type="{{ resource.resource_type }}"
-         data-subject="{{ resource.subject }}"
-         data-title="{{ resource.title|lower }}"
-         data-rating="{{ resource.average_rating }}"
-         data-downloads="{{ resource.downloads }}">
-        <div class="card resource-card">
-            {% if resource.thumbnail %}
-            <img src="{{ resource.thumbnail.url }}" class="card-img-top preview-thumb" alt="{{ resource.title }}">
-            {% else %}
-            <div class="card-img-top preview-thumb bg-light d-flex align-items-center justify-content-center">
-                <i class="fas fa-file-{{ resource.resource_type }} file-icon"></i>
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="card border-0 shadow-sm sticky-sidebar">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" id="filterForm">
+                        <!-- Resource Type Filter -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Resource Type</label>
+                            <div class="list-group list-group-flush">
+                                <a href="?{% if selected_subject %}subject={{ selected_subject }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                                   class="list-group-item list-group-item-action border-0 py-2 {% if not selected_type %}active{% endif %}">
+                                    All Types
+                                </a>
+                                {% for type in resource_types %}
+                                <a href="?type={{ type }}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                                   class="list-group-item list-group-item-action border-0 py-2 {% if selected_type == type %}active{% endif %}">
+                                    {{ type }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Subject Filter -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Subject</label>
+                            <div class="list-group list-group-flush">
+                                <a href="?{% if selected_type %}type={{ selected_type }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                                   class="list-group-item list-group-item-action border-0 py-2 {% if not selected_subject %}active{% endif %}">
+                                    All Subjects
+                                </a>
+                                {% for subject in subjects %}
+                                <a href="?subject={{ subject }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_course %}&course={{ selected_course }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}"
+                                   class="list-group-item list-group-item-action border-0 py-2 {% if selected_subject == subject %}active{% endif %}">
+                                    {{ subject }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Course Code Filter -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Course Code</label>
+                            <input type="text" class="form-control" name="course"
+                                   placeholder="e.g., CS101" value="{{ selected_course }}"
+                                   onchange="this.form.submit()">
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Sort By</label>
+                            <select class="form-select" name="sort" onchange="this.form.submit()">
+                                <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="popular" {% if selected_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                                <option value="rating" {% if selected_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+                                <option value="title_asc" {% if selected_sort == 'title_asc' %}selected{% endif %}>Title A-Z</option>
+                                <option value="title_desc" {% if selected_sort == 'title_desc' %}selected{% endif %}>Title Z-A</option>
+                            </select>
+                        </div>
+
+                        <!-- Reset Filters -->
+                        <div class="d-grid">
+                            <a href="{% url 'resources:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-2"></i>Reset Filters
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Upload CTA -->
+                {% if user.is_authenticated %}
+                <div class="card-footer bg-white border-top">
+                    <div class="d-grid">
+                        <a href="{% url 'resources:upload' %}" class="btn btn-success">
+                            <i class="fas fa-upload me-2"></i>Upload Resource
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
             </div>
+
+            <!-- Top Contributors -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-crown me-2"></i>Top Contributors</h5>
+                </div>
+                <div class="card-body">
+                    {% for contributor in top_contributors %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 40px; height: 40px;">
+                            <i class="fas fa-user text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ contributor.user__username }}</h6>
+                            <small class="text-muted">{{ contributor.count }} uploads</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources Grid -->
+        <div class="col-lg-9">
+            <!-- Results Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="h5 mb-0">Study Resources</h3>
+                    <small class="text-muted">{{ resources.paginator.count }} resources found</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'resources:my_resources' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-book me-2"></i>My Resources
+                    </a>
+                    <a href="{% url 'resources:categories' %}" class="btn btn-outline-info">
+                        <i class="fas fa-folder me-2"></i>Categories
+                    </a>
+                </div>
+            </div>
+
+            <!-- Resources Grid -->
+            {% if resources %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for resource in resources %}
+                <div class="col">
+                    <div class="card resource-card h-100 border-0 shadow-sm hover-lift">
+                        <!-- Resource Type Badge -->
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="badge bg-primary">
+                                {{ resource.get_resource_type_display }}
+                            </span>
+                        </div>
+
+                        <!-- Thumbnail or Icon -->
+                        <div class="card-img-top bg-light text-center py-4">
+                            {% if resource.thumbnail %}
+                            <img src="{{ resource.thumbnail.url }}" alt="{{ resource.title }}"
+                                 class="img-fluid" style="max-height: 150px;">
+                            {% else %}
+                            <i class="fas fa-file-alt fa-4x text-muted"></i>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Title -->
+                            <h5 class="card-title mb-2">
+                                <a href="{% url 'resources:detail' resource.pk %}" class="text-decoration-none text-dark">
+                                    {{ resource.title|truncatechars:50 }}
+                                </a>
+                            </h5>
+
+                            <!-- Course Info -->
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-graduation-cap me-1"></i>{{ resource.course_code }}
+                                {% if resource.course_name %}
+                                - {{ resource.course_name }}
+                                {% endif %}
+                            </p>
+
+                            <!-- Subject -->
+                            <p class="text-muted small mb-3">
+                                <i class="fas fa-book me-1"></i>{{ resource.get_subject_display }}
+                            </p>
+
+                            <!-- Stats -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-download me-1"></i>{{ resource.downloads }}
+                                    </small>
+                                    <small class="text-muted ms-3">
+                                        <i class="fas fa-eye me-1"></i>{{ resource.views }}
+                                    </small>
+                                </div>
+                                <!-- Rating -->
+                                {% if resource.average_rating > 0 %}
+                                <div class="text-warning small">
+                                    <i class="fas fa-star"></i> {{ resource.average_rating|floatformat:1 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Uploader Info -->
+                            <div class="d-flex align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>{{ resource.user.username }}
+                                </small>
+                                <small class="text-muted ms-3">
+                                    <i class="fas fa-clock me-1"></i>{{ resource.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer bg-white border-top">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'resources:detail' resource.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                                <a href="{% url 'resources:download' resource.pk %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if resources.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if resources.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resources.previous_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in resources.paginator.page_range %}
+                    {% if resources.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if resources.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ resources.next_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_subject %}&subject={{ selected_subject }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
             {% endif %}
 
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <span class="badge bg-{% if resource.resource_type == 'notes' %}info{% elif resource.resource_type == 'past_paper' %}danger{% else %}secondary{% endif %}">
-                            {{ resource.get_resource_type_display }}
-                        </span>
-                        <span class="badge bg-light text-dark ms-1">
-                            {{ resource.get_subject_display }}
-                        </span>
-                    </div>
-                    <div class="rating-badge">
-                        <i class="fas fa-star text-warning"></i>
-                        {{ resource.average_rating|floatformat:1 }}
-                    </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-file-alt fa-4x text-muted"></i>
                 </div>
-
-                <h5 class="card-title">{{ resource.title }}</h5>
-                <p class="card-text text-muted small">{{ resource.description|truncatewords:20 }}</p>
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <small class="text-muted">
-                            <i class="fas fa-user me-1"></i>{{ resource.user.username }}
-                        </small>
-                        <br>
-                        <small class="text-muted">
-                            <i class="fas fa-download me-1"></i>{{ resource.downloads }} downloads
-                        </small>
-                    </div>
-                    <div class="text-end">
-                        <small class="text-muted d-block">{{ resource.created_at|timesince }} ago</small>
-                        <small class="text-muted">{{ resource.course_code }}</small>
-                    </div>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <a href="{% url 'resources:detail' resource.id %}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-eye me-1"></i>Preview
-                    </a>
-                    <a href="{{ resource.file.url }}" class="btn btn-success download-btn" download>
-                        <i class="fas fa-download me-1"></i>Download
-                    </a>
-                </div>
+                <h4 class="mb-3">No resources found</h4>
+                <p class="text-muted mb-4">Try adjusting your filters or search terms</p>
+                {% if user.is_authenticated %}
+                <a href="{% url 'resources:upload' %}" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i>Upload the First Resource
+                </a>
+                {% endif %}
             </div>
-        </div>
-    </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-        <i class="fas fa-book fa-4x text-muted mb-3"></i>
-        <h4>No resources found</h4>
-        <p class="text-muted">Be the first to share study materials!</p>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Top Contributors -->
-<div class="card mt-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Contributors</h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            {% for contributor in top_contributors %}
-            <div class="col-md-3 col-6 mb-3">
-                <div class="d-flex align-items-center">
-                    {% if contributor.user.profile_picture %}
-                    <img src="{{ contributor.user.profile_picture.url }}"
-                         class="rounded-circle me-3" width="50" height="50" alt="{{ contributor.user.username }}">
-                    {% else %}
-                    <div class="rounded-circle bg-primary me-3 d-flex align-items-center justify-content-center text-white"
-                         style="width: 50px; height: 50px;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    {% endif %}
-                    <div>
-                        <h6 class="mb-0">{{ contributor.user.username }}</h6>
-                        <small class="text-muted">{{ contributor.count }} uploads</small>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
+            {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Upload Guidelines -->
-<div class="card mt-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Upload Guidelines</h5>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="d-flex">
-                    <i class="fas fa-check-circle text-success fa-2x me-3"></i>
-                    <div>
-                        <h6>Quality Content</h6>
-                        <p class="small text-muted">Upload clear, readable materials</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="d-flex">
-                    <i class="fas fa-check-circle text-success fa-2x me-3"></i>
-                    <div>
-                        <h6>Proper Formatting</h6>
-                        <p class="small text-muted">Use PDF or DOC formats when possible</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="d-flex">
-                    <i class="fas fa-check-circle text-success fa-2x me-3"></i>
-                    <div>
-                        <h6>Accurate Information</h6>
-                        <p class="small text-muted">Include course codes and descriptions</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // Filter resources
-    function filterResources() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const typeFilter = document.getElementById('typeFilter').value;
-        const subjectFilter = document.getElementById('subjectFilter').value;
-        const sortFilter = document.getElementById('sortFilter').value;
-
-        const resources = Array.from(document.querySelectorAll('.resource-item'));
-
-        // Filter
-        const filtered = resources.filter(item => {
-            const title = item.getAttribute('data-title');
-            const type = item.getAttribute('data-type');
-            const subject = item.getAttribute('data-subject');
-
-            const matchesSearch = !searchTerm || title.includes(searchTerm);
-            const matchesType = !typeFilter || type === typeFilter;
-            const matchesSubject = !subjectFilter || subject === subjectFilter;
-
-            return matchesSearch && matchesType && matchesSubject;
-        });
-
-        // Sort
-        filtered.sort((a, b) => {
-            switch(sortFilter) {
-                case 'newest':
-                    return 0; // Already sorted by server
-                case 'popular':
-                    const aDownloads = parseInt(a.getAttribute('data-downloads'));
-                    const bDownloads = parseInt(b.getAttribute('data-downloads'));
-                    return bDownloads - aDownloads;
-                case 'rating':
-                    const aRating = parseFloat(a.getAttribute('data-rating'));
-                    const bRating = parseFloat(b.getAttribute('data-rating'));
-                    return bRating - aRating;
-                default:
-                    return 0;
-            }
-        });
-
-        // Update display
-        const container = document.getElementById('resourcesContainer');
-        container.innerHTML = '';
-        filtered.forEach(item => container.appendChild(item));
-
-        if (filtered.length === 0) {
-            container.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                    <h4>No resources match your criteria</h4>
-                    <p class="text-muted">Try different filters or upload a resource!</p>
-                </div>
-            `;
-        }
+<!-- Custom CSS -->
+<style>
+    .hover-lift {
+        transition: transform 0.3s, box-shadow 0.3s;
     }
-
-    // Add event listeners
-    document.getElementById('searchInput').addEventListener('input', filterResources);
-    document.getElementById('typeFilter').addEventListener('change', filterResources);
-    document.getElementById('subjectFilter').addEventListener('change', filterResources);
-    document.getElementById('sortFilter').addEventListener('change', filterResources);
-</script>
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    }
+    .sticky-sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 20px;
+    }
+    .resource-card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .resource-card .card-img-top {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .list-group-item.active {
+        background-color: #e8f4ff;
+        border-color: #0d6efd;
+        color: #0d6efd;
+        font-weight: 500;
+    }
+</style>
 {% endblock %}

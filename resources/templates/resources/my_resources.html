@@ -1,0 +1,239 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}My Resources - Campus Resources{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-6 fw-bold mb-2">My Resources</h1>
+            <p class="text-muted">Manage your uploaded study materials</p>
+        </div>
+        <a href="{% url 'resources:upload' %}" class="btn btn-success">
+            <i class="fas fa-upload me-2"></i>Upload New
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-5">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-primary bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-primary mb-1">{{ stats.total_uploads }}</h3>
+                    <p class="text-muted small mb-0">Total Uploads</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-success bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-success mb-1">{{ stats.approved_uploads }}</h3>
+                    <p class="text-muted small mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-warning mb-1">{{ stats.total_downloads }}</h3>
+                    <p class="text-muted small mb-0">Total Downloads</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card border-0 bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <h3 class="text-info mb-1">{{ stats.total_views }}</h3>
+                    <p class="text-muted small mb-0">Total Views</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resources Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Uploaded Resources</h5>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-2"></i>Filter
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?">All Resources</a></li>
+                        <li><a class="dropdown-item" href="?status=approved">Approved Only</a></li>
+                        <li><a class="dropdown-item" href="?status=pending">Pending Only</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        {% if resources %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Resource</th>
+                        <th>Course</th>
+                        <th>Type</th>
+                        <th>Downloads</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resource in resources %}
+                    <tr>
+                        <td>
+                            <strong>
+                                <a href="{% url 'resources:detail' resource.pk %}" class="text-decoration-none">
+                                    {{ resource.title }}
+                                </a>
+                            </strong><br>
+                            <small class="text-muted">{{ resource.created_at|date:"M d, Y" }}</small>
+                        </td>
+                        <td>{{ resource.course_code }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ resource.get_resource_type_display }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-download text-muted me-2"></i>
+                                {{ resource.downloads }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if resource.is_approved %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>Approved
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock me-1"></i>Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'resources:detail' resource.pk %}" class="btn btn-outline-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'resources:update' resource.pk %}" class="btn btn-outline-secondary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'resources:delete' resource.pk %}" class="btn btn-outline-danger" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Empty State -->
+        {% else %}
+        <div class="card-body text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-file-alt fa-4x text-muted"></i>
+            </div>
+            <h4 class="mb-3">No resources uploaded yet</h4>
+            <p class="text-muted mb-4">Start sharing your study materials with the campus community</p>
+            <a href="{% url 'resources:upload' %}" class="btn btn-primary">
+                <i class="fas fa-upload me-2"></i>Upload Your First Resource
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-bookmark fa-3x text-warning mb-3"></i>
+                    <h5>My Bookmarks</h5>
+                    <p class="text-muted small mb-3">Access your saved resources</p>
+                    <a href="{% url 'resources:my_bookmarks' %}" class="btn btn-outline-warning">
+                        View Bookmarks
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-star fa-3x text-success mb-3"></i>
+                    <h5>Popular Resources</h5>
+                    <p class="text-muted small mb-3">See what others are downloading</p>
+                    <a href="{% url 'resources:popular' %}" class="btn btn-outline-success">
+                        View Popular
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                    <h5>Upload Guidelines</h5>
+                    <p class="text-muted small mb-3">Learn how to share effectively</p>
+                    <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#guidelinesModal">
+                        View Guidelines
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guidelines Modal -->
+<div class="modal fade" id="guidelinesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Guidelines</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold text-success mb-3">✅ Do's</h6>
+                <ul class="small mb-4">
+                    <li class="mb-2">Share your own notes and study materials</li>
+                    <li class="mb-2">Use descriptive titles and detailed descriptions</li>
+                    <li class="mb-2">Include course code, subject, and relevant tags</li>
+                    <li>Upload files in common formats (PDF, DOC, PPT, etc.)</li>
+                </ul>
+                
+                <h6 class="fw-bold text-danger mb-3">❌ Don'ts</h6>
+                <ul class="small mb-0">
+                    <li class="mb-2">Don't upload copyrighted materials</li>
+                    <li class="mb-2">Don't share exam papers before deadlines</li>
+                    <li class="mb-2">Don't upload malicious or inappropriate files</li>
+                    <li>Don't spam with low-quality content</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table th {
+        border-top: none;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+    .card {
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}

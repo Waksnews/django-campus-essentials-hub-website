@@ -1,0 +1,93 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}My Bookmarks - Campus Resources{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="display-6 fw-bold mb-2">My Bookmarks</h1>
+            <p class="text-muted">Your saved resources for quick access</p>
+        </div>
+        <a href="{% url 'resources:list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-search me-2"></i>Browse Resources
+        </a>
+    </div>
+
+    <!-- Bookmarks Grid -->
+    {% if bookmarks %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for bookmark in bookmarks %}
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary mb-2">
+                                {{ bookmark.resource.get_resource_type_display }}
+                            </span>
+                            <h5 class="card-title mb-1">
+                                <a href="{% url 'resources:detail' bookmark.resource.pk %}" class="text-decoration-none text-dark">
+                                    {{ bookmark.resource.title|truncatechars:50 }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-graduation-cap me-1"></i>{{ bookmark.resource.course_code }}
+                            </p>
+                        </div>
+                        <a href="{% url 'resources:toggle_bookmark' bookmark.resource.pk %}" class="btn btn-sm btn-outline-warning" title="Remove bookmark">
+                            <i class="fas fa-bookmark"></i>
+                        </a>
+                    </div>
+                    
+                    <p class="card-text text-muted small mb-3">
+                        {{ bookmark.resource.description|truncatewords:20 }}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-download me-1"></i>{{ bookmark.resource.downloads }}
+                        </small>
+                        <small class="text-muted">
+                            Bookmarked {{ bookmark.created_at|timesince }} ago
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'resources:detail' bookmark.resource.pk %}" class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
+                        <a href="{% url 'resources:download' bookmark.resource.pk %}" class="btn btn-sm btn-success">
+                            Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Empty State -->
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-bookmark fa-4x text-muted"></i>
+        </div>
+        <h4 class="mb-3">No bookmarks yet</h4>
+        <p class="text-muted mb-4">Browse resources and click the bookmark icon to save them</p>
+        <a href="{% url 'resources:list' %}" class="btn btn-primary">
+            <i class="fas fa-search me-2"></i>Browse Resources
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}

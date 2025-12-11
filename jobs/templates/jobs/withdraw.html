@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Withdraw Application - Campus Jobs{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <!-- Icon -->
+                    <div class="mb-4">
+                        <i class="fas fa-times-circle fa-4x text-warning"></i>
+                    </div>
+                    
+                    <!-- Message -->
+                    <h2 class="fw-bold mb-3">Withdraw Application?</h2>
+                    <p class="text-muted mb-4">
+                        Are you sure you want to withdraw your application for 
+                        "<strong>{{ application.job.title }}</strong>"?
+                    </p>
+                    
+                    <!-- Application Details -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h5 class="mb-2">{{ application.job.title }}</h5>
+                            <div class="d-flex justify-content-between text-muted small mb-3">
+                                <span><i class="fas fa-user-tie me-1"></i>{{ application.job.user.username }}</span>
+                                <span><i class="fas fa-map-marker-alt me-1"></i>{{ application.job.location }}</span>
+                                <span><i class="fas fa-money-bill-wave me-1"></i>${{ application.job.budget|floatformat:2 }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-{{ application.get_status_color }}">
+                                    Current Status: {{ application.get_status_display }}
+                                </span>
+                                <small class="text-muted">
+                                    Applied {{ application.applied_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Note -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Once withdrawn, you cannot reapply to this job unless the employer reopens applications.
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-center">
+                            <a href="{% url 'jobs:my_jobs' %}" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg px-4">
+                                <i class="fas fa-times me-2"></i>Withdraw Application
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}
