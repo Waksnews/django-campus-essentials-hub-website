@@ -1,8 +1,9 @@
-pip install django
-pip install pillow
-pip install python-dotenv
-pip install django-crispy-forms
-pip install crispy-bootstrap5
-pip install qrcode
-pip install reportlab
-pip install django-filter
+django
+pillow
+python-dotenv
+django-crispy-forms
+crispy-bootstrap5
+qrcode
+reportlab
+django-filter
+gunicorn
