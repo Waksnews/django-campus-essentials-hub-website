@@ -11,7 +11,7 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'email', 'student_id', 'university')
     ordering = ('-date_joined',)
 
-    fieldsets = UserAdmin.fieldsets + (
+    fieldsets = list(UserAdmin.fieldsets) + [
         ('Student Information', {
             'fields': ('student_id', 'university', 'course', 'year_of_study',
                        'phone_number', 'profile_picture', 'bio', 'location')
@@ -20,7 +20,7 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('user_type', 'points', 'is_verified',
                        'verification_code', 'dark_mode')
         }),
-    )
+    ]
 
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Student Information', {

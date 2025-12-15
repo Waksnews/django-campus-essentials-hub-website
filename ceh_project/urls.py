@@ -23,7 +23,6 @@ urlpatterns = [
     path('resources/', include('resources.urls')),
     path('services/', include('services.urls')),
     path('messaging/', include('messaging.urls')),
-
     # API endpoints
     path('api/', include('api.urls')),
     path('api/theme-toggle/', theme_toggle, name='theme_toggle'),

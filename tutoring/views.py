@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from datetime import datetime, date, timedelta
 import json
 
-from .models import Tutor, Session, Review, Subject, AvailabilitySlot
+from .models import Tutor, Session, Review, Subject
 from .forms import TutorRegistrationForm, SessionBookingForm, ReviewForm, TutorUpdateForm
 from messaging.models import Message, Notification
 from accounts.models import CustomUser
@@ -33,9 +33,15 @@ def tutor_list(request):
     if level:
         tutors = tutors.filter(year_of_study=level)
     if min_rate:
-        tutors = tutors.filter(hourly_rate__gte=min_rate)
+        try:
+            tutors = tutors.filter(hourly_rate__gte=float(min_rate))
+        except ValueError:
+            pass
     if max_rate:
-        tutors = tutors.filter(hourly_rate__lte=max_rate)
+        try:
+            tutors = tutors.filter(hourly_rate__lte=float(max_rate))
+        except ValueError:
+            pass
     if search:
         tutors = tutors.filter(
             Q(user__username__icontains=search) |
@@ -81,8 +87,8 @@ def tutor_list(request):
         'selected_level': level,
         'selected_sort': sort,
         'rate_range': {
-            'min': 0 if not tutors else min([t.hourly_rate for t in tutors]),
-            'max': 0 if not tutors else max([t.hourly_rate for t in tutors]),
+            'min': 0 if not tutors.exists() else float(min([t.hourly_rate for t in tutors])),
+            'max': 0 if not tutors.exists() else float(max([t.hourly_rate for t in tutors])),
         }
     }
     return render(request, 'tutoring/tutors.html', context)
@@ -92,23 +98,30 @@ def tutor_detail(request, tutor_id):
     """View tutor profile with booking functionality"""
     tutor = get_object_or_404(Tutor.objects.select_related('user', 'primary_subject'), id=tutor_id)
 
-    # Increment profile views (you can add this field to model)
-
     # Get reviews with stats
     reviews = Review.objects.filter(tutor=tutor).select_related('student').order_by('-created_at')
     review_paginator = Paginator(reviews, 5)
     review_page = request.GET.get('review_page')
     review_page_obj = review_paginator.get_page(review_page)
 
-    # Calculate review stats
+    # Calculate review stats - handle missing category fields
     review_stats = {
         'total': reviews.count(),
         'average': reviews.aggregate(avg=Avg('rating'))['avg'] or 0,
-        'knowledge': reviews.aggregate(avg=Avg('knowledge'))['avg'] or 0,
-        'teaching': reviews.aggregate(avg=Avg('teaching_skill'))['avg'] or 0,
-        'communication': reviews.aggregate(avg=Avg('communication'))['avg'] or 0,
-        'punctuality': reviews.aggregate(avg=Avg('punctuality'))['avg'] or 0,
     }
+
+    # Safely calculate category ratings
+    try:
+        review_stats['knowledge'] = reviews.aggregate(avg=Avg('knowledge'))['avg'] or review_stats['average']
+        review_stats['teaching'] = reviews.aggregate(avg=Avg('teaching_skill'))['avg'] or review_stats['average']
+        review_stats['communication'] = reviews.aggregate(avg=Avg('communication'))['avg'] or review_stats['average']
+        review_stats['punctuality'] = reviews.aggregate(avg=Avg('punctuality'))['avg'] or review_stats['average']
+    except:
+        # If category fields don't exist in database yet
+        review_stats['knowledge'] = review_stats['average']
+        review_stats['teaching'] = review_stats['average']
+        review_stats['communication'] = review_stats['average']
+        review_stats['punctuality'] = review_stats['average']
 
     # Get upcoming sessions (tutor only)
     upcoming_sessions = []
@@ -119,8 +132,30 @@ def tutor_detail(request, tutor_id):
             date__gte=date.today()
         ).select_related('student').order_by('date', 'start_time')[:5]
 
-    # Get availability slots
-    availability_slots = AvailabilitySlot.objects.filter(tutor=tutor).order_by('day_of_week', 'start_time')
+    # Parse availability from JSON field (CHANGED: using 'availability' not 'availability_slots')
+    availability_data = tutor.availability if hasattr(tutor, 'availability') and tutor.availability else {}
+
+    # Create availability display for template
+    availability_display = []
+    days_mapping = {
+        'monday': 'Monday', 'tuesday': 'Tuesday', 'wednesday': 'Wednesday',
+        'thursday': 'Thursday', 'friday': 'Friday', 'saturday': 'Saturday',
+        'sunday': 'Sunday'
+    }
+
+    for day, hours in availability_data.items():
+        if hours and isinstance(hours, list):
+            day_name = days_mapping.get(day, day.capitalize())
+            hours_formatted = ', '.join([f"{h}:00" for h in hours])
+            availability_display.append({
+                'day': day_name,
+                'hours': hours_formatted,
+                'available': True
+            })
+
+    # If no availability specified, show default message
+    if not availability_display:
+        availability_display = [{'day': 'Not specified', 'hours': 'Contact for availability', 'available': False}]
 
     # Check if user has pending booking with this tutor
     has_pending_booking = False
@@ -139,24 +174,41 @@ def tutor_detail(request, tutor_id):
     # Check if user is the tutor
     is_owner = request.user.is_authenticated and request.user == tutor.user
 
-    # Get similar tutors
-    similar_tutors = Tutor.objects.filter(
-        is_available=True,
-        subjects=tutor.primary_subject
-    ).exclude(id=tutor.id).order_by('-rating')[:4]
+    # Get similar tutors - FIXED: use primary_subject instead of subjects
+    similar_tutors = []
+    if tutor.primary_subject:
+        similar_tutors = Tutor.objects.filter(
+            is_available=True,
+            primary_subject=tutor.primary_subject
+        ).exclude(id=tutor.id).order_by('-rating')[:4]
+
+    # Generate next 7 days for availability tab
+    next_7_days = []
+    for i in range(7):
+        day = date.today() + timedelta(days=i)
+        day_name = day.strftime('%A').lower()
+        # Check if tutor is available on this day
+        is_available = day_name in availability_data and availability_data[day_name]
+        next_7_days.append({
+            'date': day,
+            'day_name': day_name,
+            'available': bool(is_available)
+        })
 
     context = {
         'tutor': tutor,
         'reviews': review_page_obj,
         'review_stats': review_stats,
         'upcoming_sessions': upcoming_sessions,
-        'availability_slots': availability_slots,
+        'availability_display': availability_display,  # CHANGED
+        'availability_data': availability_data,
         'has_pending_booking': has_pending_booking,
         'user_review': user_review,
         'is_owner': is_owner,
         'similar_tutors': similar_tutors,
         'today': date.today(),
         'next_week': date.today() + timedelta(days=7),
+        'next_7_days': next_7_days,  # ADDED
     }
     return render(request, 'tutoring/tutor_detail.html', context)
 
@@ -190,13 +242,15 @@ def become_tutor(request):
                              )
 
             # Create notification for admin
-            Notification.objects.create(
-                user=CustomUser.objects.filter(is_superuser=True).first(),
-                title=f"New Tutor Application: {request.user.username}",
-                message=f"{request.user.username} has applied to become a tutor.",
-                notification_type='tutor_application',
-                link=f"/admin/tutoring/tutor/{tutor.id}/change/"
-            )
+            admin_user = CustomUser.objects.filter(is_superuser=True).first()
+            if admin_user:
+                Notification.objects.create(
+                    user=admin_user,
+                    title=f"New Tutor Application: {request.user.username}",
+                    message=f"{request.user.username} has applied to become a tutor.",
+                    notification_type='tutor_application',
+                    link=f"/admin/tutoring/tutor/{tutor.id}/change/"
+                )
 
             return redirect('tutoring:tutor_detail', tutor_id=tutor.id)
         else:
@@ -252,6 +306,18 @@ def tutor_dashboard(request):
     # Get total hours taught
     total_hours = tutor.total_hours
 
+    # Generate next 7 days for availability
+    next_7_days = []
+    availability_data = tutor.availability if hasattr(tutor, 'availability') and tutor.availability else {}
+    for i in range(7):
+        day = date.today() + timedelta(days=i)
+        day_name = day.strftime('%A').lower()
+        next_7_days.append({
+            'date': day,
+            'day_name': day_name,
+            'available': day_name in availability_data and availability_data[day_name]
+        })
+
     context = {
         'tutor': tutor,
         'upcoming_sessions': upcoming_sessions,
@@ -260,6 +326,8 @@ def tutor_dashboard(request):
         'monthly_earnings': monthly_earnings,
         'total_hours': total_hours,
         'today': date.today(),
+        'next_7_days': next_7_days,
+        'availability_data': availability_data,
     }
     return render(request, 'tutoring/tutor_dashboard.html', context)
 
@@ -286,7 +354,7 @@ def book_session(request, tutor_id):
             session = form.save(commit=False)
             session.tutor = tutor
             session.student = request.user
-            session.amount = (tutor.hourly_rate / 60) * session.duration
+            session.amount = (float(tutor.hourly_rate) / 60) * session.duration
 
             # Check for scheduling conflicts
             conflicting_session = Session.objects.filter(
@@ -321,12 +389,13 @@ def book_session(request, tutor_id):
     else:
         form = SessionBookingForm(tutor=tutor, student=request.user)
 
-    # Get tutor's availability for the next 2 weeks
+    # Get tutor's availability for the next 2 weeks - CHANGED: using 'availability' not 'availability_slots'
+    availability_data = tutor.availability if hasattr(tutor, 'availability') and tutor.availability else {}
     availability = {}
     for i in range(14):
         day = date.today() + timedelta(days=i)
         day_name = day.strftime('%A').lower()
-        availability[day] = tutor.availability_slots.get(day_name, [])
+        availability[day] = availability_data.get(day_name, [])
 
     context = {
         'tutor': tutor,
@@ -378,7 +447,7 @@ def submit_review(request, tutor_id):
     else:
         return JsonResponse({
             'success': False,
-            'errors': form.errors.as_json()
+            'errors': form.errors
         }, status=400)
 
 
@@ -462,6 +531,10 @@ def my_sessions(request):
         Q(date__lt=date.today())
     ) if tutor_sessions else []
 
+    # Calculate totals
+    total_spent = sum(session.amount for session in past_student if session.status == 'completed')
+    pending_sessions_count = upcoming_student.filter(status='pending').count()
+
     context = {
         'upcoming_student': upcoming_student,
         'past_student': past_student,
@@ -469,6 +542,8 @@ def my_sessions(request):
         'past_tutor': past_tutor,
         'is_tutor': hasattr(request.user, 'tutor_profile'),
         'today': date.today(),
+        'total_spent': total_spent,
+        'pending_sessions_count': pending_sessions_count,
     }
     return render(request, 'tutoring/my_sessions.html', context)
 
@@ -560,13 +635,16 @@ def session_detail(request, session_id):
     if request.user != session.student and request.user != session.tutor.user:
         return HttpResponseForbidden("You don't have permission to view this session.")
 
+    # Check if review exists
+    has_review = hasattr(session, 'session_review')
+
     context = {
         'session': session,
         'is_student': request.user == session.student,
         'is_tutor': request.user == session.tutor.user,
         'can_review': (request.user == session.student and
                        session.status == 'completed' and
-                       not hasattr(session, 'session_review')),
+                       not has_review),
     }
     return render(request, 'tutoring/session_detail.html', context)
 
@@ -585,23 +663,28 @@ def update_availability(request):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             try:
                 data = json.loads(request.body)
-                tutor.availability_slots = data.get('slots', {})
+                # CHANGED: using 'availability' not 'availability_slots'
+                tutor.availability = data.get('slots', {})
                 tutor.save()
                 return JsonResponse({'success': True})
             except json.JSONDecodeError:
                 return JsonResponse({'success': False, 'error': 'Invalid JSON'})
 
+    # GET request - render form
+    availability_data = tutor.availability if hasattr(tutor, 'availability') and tutor.availability else {}
+
     context = {
         'tutor': tutor,
         'days': [
-            {'id': 0, 'name': 'Monday'},
-            {'id': 1, 'name': 'Tuesday'},
-            {'id': 2, 'name': 'Wednesday'},
-            {'id': 3, 'name': 'Thursday'},
-            {'id': 4, 'name': 'Friday'},
-            {'id': 5, 'name': 'Saturday'},
-            {'id': 6, 'name': 'Sunday'},
+            {'id': 'monday', 'name': 'Monday'},
+            {'id': 'tuesday', 'name': 'Tuesday'},
+            {'id': 'wednesday', 'name': 'Wednesday'},
+            {'id': 'thursday', 'name': 'Thursday'},
+            {'id': 'friday', 'name': 'Friday'},
+            {'id': 'saturday', 'name': 'Saturday'},
+            {'id': 'sunday', 'name': 'Sunday'},
         ],
-        'time_slots': list(range(8, 21)),  # 8 AM to 9 PM
+        'time_slots': list(range(8, 22)),  # 8 AM to 10 PM
+        'availability_data': availability_data,
     }
     return render(request, 'tutoring/update_availability.html', context)

@@ -252,7 +252,7 @@
                     <div class="mb-4">
                         <h5 class="fw-bold mb-3">Weekly Availability</h5>
                         <div class="row">
-                            {% for slot in availability_slots %}
+                            {% for slot in availability_display %}
                             <div class="col-md-6 mb-3">
                                 <div class="availability-slot {% if slot.is_available %}available{% else %}booked{% endif %}">
                                     <div class="d-flex justify-content-between align-items-center">
@@ -290,7 +290,7 @@
                                         <div class="fw-bold">{{ day|date:"M j" }}</div>
                                         <div class="mt-2">
                                             {% with day_name=day|date:"l"|lower %}
-                                                {% if day_name in tutor.availability_slots %}
+                                                {% if day_name in tutor.availability_display %}
                                                 <span class="badge bg-success">Available</span>
                                                 {% else %}
                                                 <span class="badge bg-secondary">Unavailable</span>
